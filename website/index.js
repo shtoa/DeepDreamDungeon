@@ -129,8 +129,8 @@ function init() {
     room = new Room.Room(roomBounds, themes[themeIndex]);
 
 
-
-    room2 = new Room.Room(roomBounds.clone().translate(new THREE.Vector3(400,110,0)), themes[3]);
+    // 400,110,0
+    room2 = new Room.Room(roomBounds.clone().translate(new THREE.Vector3(0,110,0)), themes[3]);
     
     room.surfaces.forEach((surface)=>{
         scene.add(surface);
@@ -470,7 +470,7 @@ async function processIndex(actionList){
 
     themeTracker.innerHTML = curTheme;
 
-    room.updateTheme(themes[themeIndex])
+    room2.updateTheme(themes[themeIndex])
 
 
 

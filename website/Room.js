@@ -33,7 +33,7 @@ export class Room {
         
         ceiling.position.set(this._center.x, this._center.y + (this._size.y/2) + this._roomThickness/4 , this._center.z);
         ceiling.receiveShadow = true;
-        ceiling.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/floor.png`);
+        ceiling.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/ceiling.png`);
         ceiling.material.needsUpdate = true;
       
 
@@ -88,7 +88,7 @@ export class Room {
     updateTheme(newTheme){
         this._curTheme = newTheme;
 
-        this._ceiling.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/floor.png`);
+        this._ceiling.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/ceiling.png`);
         this._floor.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/floor.png`);
         this._walls.forEach((wall)=>{
             wall.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/wall.png`);

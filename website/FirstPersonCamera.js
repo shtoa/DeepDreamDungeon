@@ -38,10 +38,10 @@ export class FirstPersonCamera{
         this.portalCamera = new THREE.PerspectiveCamera( 45, this._camera.aspect, 1, 2000 );
         
         
-        var center2 = new THREE.Vector3();
-        roomBounds2.center(center2);
+        this.center2 = new THREE.Vector3();
+        roomBounds2.getCenter(this.center2);
         
-        this.portalCamera.position.copy(center2);
+        this.portalCamera.position.copy(this.center2);
 
 
         // https://discourse.threejs.org/t/getting-screen-coords-in-shadermaterial-shaders/23783/2
@@ -52,6 +52,7 @@ export class FirstPersonCamera{
     uniform mat4 camProj;
     uniform mat4 viewMat;
     uniform mat4 model;
+    varying vec2 vUv;
 	void main() {
         // projectionMatrix
 		vPos = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
@@ -60,8 +61,8 @@ export class FirstPersonCamera{
 
         //vPos = camProj * viewMat * vec4( position, 1.0 );
         gl_Position = vPos;
-
-        testPos = camProj * model * vec4( position, 1.0 );;
+        vUv = uv;
+        testPos = camProj * model * vec4( position, 1.0 );
 
 	}
 `;
@@ -70,6 +71,10 @@ export class FirstPersonCamera{
 	varying vec4 vPos;
     varying vec4 testPos;
     uniform sampler2D renderTexture;
+    uniform sampler2D portalMask;
+
+    varying vec2 vUv;
+
   
   void main() {
 
@@ -84,9 +89,19 @@ export class FirstPersonCamera{
     
 		vCoords = vCoords * 0.5 + 0.5;
   
-    vec2 uv = vCoords;
+    vec2 suv = vCoords;
     //gl_FragColor = vec4( uv, 0.0, 1.0 );
-    gl_FragColor = texture2D(renderTexture, uv);
+    
+    vec4 pMask = texture2D(portalMask,vUv);
+    vec4 portal = texture2D(renderTexture, suv);
+
+    vec4 maskedPortal = vec4(portal.x,portal.y,portal.z,portal.w);
+    
+    if(pMask.x == 1.0){
+        discard;
+    }
+
+    gl_FragColor = maskedPortal;
   }
 `;
 
@@ -98,7 +113,7 @@ this.portalCamera.updateProjectionMatrix();
 this.portalMaterial = new THREE.ShaderMaterial( {
 
         uniforms: {
-
+            portalMask: {value: new THREE.TextureLoader().load("./portalMask.png")},
             renderTexture: {value: this.renderTarget.texture},
             camProj: {
                 
@@ -190,18 +205,31 @@ this.portalMaterial = new THREE.ShaderMaterial( {
         var roomSize = new THREE.Vector3();
         this._roomBounds.getSize(roomSize);
 
+        var curRoomCenter = new THREE.Vector3();
+        this._roomBounds.getCenter(curRoomCenter);
+
+
+        var portalFromCenter = this._portal.position.clone().add(new THREE.Vector3(0,-10,0)).sub(curRoomCenter);
+
 
         var posFromPortal = this._camera.position.clone().sub(this._portal.position.clone().add(new THREE.Vector3(0,-10,0)));
-        
-        this.portalCamera.position.copy(this._camera.clone().position.add(new THREE.Vector3(0,roomSize.y,0)).add(new THREE.Vector3(0,10,0)));
-      
+        var newPos = posFromPortal //.multiplyScalar(-1) //.add(new THREE.Vector3()) //0,roomSize.y,0
+       
 
        // this._camera.rotation
 
        ///  WORKING VALUES AS POSITON IS SET CORRECTLY
        // ----------------------------------
-       //this.portalCamera.position.copy(this._portal.position.clone().add(new THREE.Vector3(0,roomSize.y,0)));
+       //this.portalCamera.position.copy(this._camera.clone().position.add(new THREE.Vector3(0,roomSize.y,0)).add(new THREE.Vector3(0,10,0)));
+       
+     
+       //.sub(new THREE.Vector3(-this.portalNormal.x*roomSize.x/2,-this.portalNormal.y*roomSize.y/2-10,-this.portalNormal.z*roomSize.z/2)
+       
+       this.portalCamera.position.copy(newPos.add(this.center2))
+       
        this.portalCamera.rotation.copy(new THREE.Euler().setFromVector3(new THREE.Vector3(this._camera.rotation.x, this._camera.rotation.y,this._camera.rotation.z)));
+
+       
        // ----------------------------------
        
        
