@@ -1,0 +1,45 @@
+body{
+    margin: 0 auto;
+    padding: 0 auto;
+    overflow: hidden;
+}
+
+#currentTheme{
+    top: 10px;
+    position: absolute;
+    margin: 0 auto;
+    padding: 0 auto;
+    width: 100%;
+
+    text-align: center;
+    color: white;
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+    font-size: 2em;
+    
+
+}
+
+
+#handInputs{
+    top: 5%;
+    left:5%;
+    position: absolute;
+    margin: 0 auto;
+    padding: 0 auto;
+    width: 100%;
+
+    text-align: left;
+    color: white;
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+    font-size: 2em;
+    
+
+}
+
+#reticle{
+    top:47.5%;
+    left:47.5%;
+    width:5%;
+    height: 5%;
+    position: absolute;
+}
