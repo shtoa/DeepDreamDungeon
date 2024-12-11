@@ -185,9 +185,9 @@ function init() {
     fLoader.load("gun.fbx", (object)=>
     {
 
-        object.position.set(0.6,-0.3,-1.2)
+        object.position.set(0.1,-0.08,-0.3)
 
-        var scale = 0.005;
+        var scale = 0.0008;
         object.scale.set(scale,scale,scale);
   
         scene.add(object)

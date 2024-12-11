@@ -490,8 +490,8 @@ this.portalMaterial = new THREE.ShaderMaterial( {
             this._isGrounded = false;
         }
 
-        const forwardV = ((this._input._keys["87"] ? 1 : 0) + (this._input._keys["83"] ? -1 : 0))*100;
-        const strafeV = ((this._input._keys["65"] ? 1 : 0) + (this._input._keys["68"] ? -1 : 0))*100;
+        const forwardV = ((this._input._keys["87"] ? 1 : 0) + (this._input._keys["83"] ? -1 : 0))*120;
+        const strafeV = ((this._input._keys["65"] ? 1 : 0) + (this._input._keys["68"] ? -1 : 0))*120;
 
         const qx = new THREE.Quaternion();
         qx.setFromAxisAngle(new THREE.Vector3(0,1,0), this._phi);
@@ -518,7 +518,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
 
         //var sphereCollider = new THREE.Sphere(testTranslation, 9);
         var smallBox = this._roomBounds.clone();
-        smallBox.expandByScalar(-0.2);
+        smallBox.expandByScalar(-0.25);
 
 
         if(smallBox.containsPoint(testTranslation)){
@@ -541,6 +541,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
                         console.log("collides portal")
 
                         var newRBounds = this._roomBounds2.clone();
+                        //newRBounds.expandByScalar(-0.25);
 
                         var newPosCamera = this.portalCamera.position.clone().add(testTranslation.clone().sub(this._translation));
                         //.add(new THREE.Vector3().multiplyVectors(new THREE.Vector3(0,this.portalNormal.y,0).normalize(),new THREE.Vector3(0,2*this._gravity,0)))
