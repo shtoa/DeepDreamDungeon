@@ -28,10 +28,14 @@ export class Room {
 
     generateCeiling(_){
 
-        var ceiling = new THREE.Mesh( new THREE.BoxBufferGeometry( this._size.x, this._roomThickness, this._size.z ), new THREE.MeshPhongMaterial( ) );
+        var gm  = new THREE.PlaneGeometry( this._size.x, this._size.z );
+        gm.rotateX(Math.PI/2);
+       // gm.computeVertexNormals();
         
-        
-        ceiling.position.set(this._center.x, this._center.y + (this._size.y/2) + this._roomThickness/4 , this._center.z);
+
+        var ceiling = new THREE.Mesh( gm, new THREE.MeshPhongMaterial( ) );
+  
+        ceiling.position.set(this._center.x, this._center.y + (this._size.y/2), this._center.z);
         ceiling.receiveShadow = true;
         ceiling.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/ceiling.png`);
         ceiling.material.needsUpdate = true;
@@ -45,20 +49,35 @@ export class Room {
        
 
         // rename variables
-        var leftWall = new THREE.Mesh( new THREE.BoxBufferGeometry( this._size.x, this._size.y, this._roomThickness ), new THREE.MeshPhongMaterial( ) );
-        leftWall.position.set(this._center.x, this._center.y, this._center.z - (this._size.z/2) - this._roomThickness/4);
+
+        var lGM  = new THREE.PlaneGeometry( this._size.x, this._size.y );
+
+        var leftWall = new THREE.Mesh( lGM, new THREE.MeshPhongMaterial( ) );
+        leftWall.position.set(this._center.x, this._center.y, this._center.z - (this._size.z/2));
   
 
+        var rGM  = new THREE.PlaneGeometry( this._size.x, this._size.y );
+        rGM.rotateY(Math.PI)
 
-        var rightWall = new THREE.Mesh( new THREE.BoxBufferGeometry( this._size.x, this._size.y, this._roomThickness ), new THREE.MeshPhongMaterial(  ) );
-        rightWall.position.set(this._center.x, this._center.y, this._center.z + (this._size.z/2) + this._roomThickness/4);
+
+        var rightWall = new THREE.Mesh( rGM, new THREE.MeshPhongMaterial(  ) );
+        rightWall.position.set(this._center.x, this._center.y, this._center.z + (this._size.z/2));
 
 
-        var frontWall = new THREE.Mesh( new THREE.BoxBufferGeometry( this._roomThickness, this._size.y,  this._size.z), new THREE.MeshPhongMaterial(  ) );
-        frontWall.position.set(this._center.x + (this._size.x/2) + this._roomThickness/4, this._center.y, this._center.z);
 
-        var backWall = new THREE.Mesh( new THREE.BoxBufferGeometry( this._roomThickness, this._size.y, this._size.z), new THREE.MeshPhongMaterial(  ) );
-        backWall.position.set(this._center.x - (this._size.x/2) - this._roomThickness/4, this._center.y, this._center.z);
+
+        var fGM =  new THREE.PlaneGeometry( this._size.z, this._size.y);
+        fGM.rotateY(-Math.PI/2)
+
+        var frontWall = new THREE.Mesh( fGM, new THREE.MeshPhongMaterial(  ) );
+        frontWall.position.set(this._center.x + (this._size.x/2), this._center.y, this._center.z);
+
+        var bGM =  new THREE.PlaneGeometry( this._size.z, this._size.y);
+        bGM.rotateY(Math.PI/2)
+
+
+        var backWall = new THREE.Mesh(bGM, new THREE.MeshPhongMaterial(  ) );
+        backWall.position.set(this._center.x - (this._size.x/2) , this._center.y, this._center.z);
 
         var walls = [leftWall, rightWall, frontWall, backWall];
 
@@ -72,11 +91,14 @@ export class Room {
     }
 
     generateFloor(_){
+
+        var gm  = new THREE.PlaneGeometry( this._size.x, this._size.z );
+        gm.rotateX(-Math.PI/2);
        
-        var floor = new THREE.Mesh( new THREE.BoxBufferGeometry( this._size.x, this._roomThickness, this._size.z ), new THREE.MeshPhongMaterial( ) );
-        
-        
-        floor.position.set(this._center.x, this._center.y - (this._size.y/2) - this._roomThickness/4 , this._center.z);
+        var floor = new THREE.Mesh( gm, new THREE.MeshPhongMaterial( ) );
+      
+    
+        floor.position.set(this._center.x, this._center.y - (this._size.y/2), this._center.z);
         floor.receiveShadow = true;
         floor.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/floor.png`);
         floor.material.needsUpdate = true;

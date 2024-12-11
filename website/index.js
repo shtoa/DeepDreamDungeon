@@ -31,6 +31,7 @@ var themes = [];
 var themeIndex = 0;
 
 var handHelper;
+var portalRoom;
 
 const preload = async() =>{
     //handpose = ml5.handPose(); //video, options;
@@ -51,7 +52,7 @@ const preload = async() =>{
 const setup = async() =>{
     
     await handHelper.initVideo();
-    await handHelper.getPose(); // test to prevent stuttering when shooting
+   // await handHelper.getPose(); // test to prevent stuttering when shooting
     init();
 
 }
@@ -75,6 +76,8 @@ var gestureLabel = new Text();
 var gunModel;
 var room;
 var room2;
+
+var curRoom;
 
 var soundPlayer;
 
@@ -103,7 +106,7 @@ function init() {
 
     rect = document.getElementById("snuggle").getBoundingClientRect()
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 500 );
    // camera.position.set( 0, 10, 0 );
 
     const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
@@ -130,7 +133,9 @@ function init() {
 
 
     // 400,110,0
-    room2 = new Room.Room(roomBounds.clone().translate(new THREE.Vector3(0,110,0)), themes[3]);
+    room2 = new Room.Room(roomBounds.clone().translate(new THREE.Vector3(200,200,200)), themes[3]);
+    curRoom = room;
+    portalRoom = room2;
     
     room.surfaces.forEach((surface)=>{
         scene.add(surface);
@@ -173,7 +178,7 @@ function init() {
     camera.position.set(room._center.x, room._center.y, room._center.z);
 
 
-    fpsCamera = new FirstPersonCamera.FirstPersonCamera(camera, roomBounds, room, scene, renderer, room2.bounds);
+    fpsCamera = new FirstPersonCamera.FirstPersonCamera(camera, roomBounds, room, scene, renderer, room2.bounds, room2, curRoom, portalRoom);
     //
     var fLoader = new FBXLoader();
     
@@ -470,7 +475,7 @@ async function processIndex(actionList){
 
     themeTracker.innerHTML = curTheme;
 
-    room2.updateTheme(themes[themeIndex])
+    fpsCamera.portalRoom.updateTheme(themes[themeIndex])
 
 
 

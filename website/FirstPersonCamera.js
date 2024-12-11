@@ -3,15 +3,20 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module
 import { DecalGeometry } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/geometries/DecalGeometry.js';
 
 export class FirstPersonCamera{
-    constructor(camera, roomBounds, room, scene, renderer, roomBounds2){
+    constructor(camera, roomBounds, room, scene, renderer, roomBounds2, room2, curRoom, portalRoom){
         this._camera = camera;
         this._input = new InputController.InputController();
         this._rotation = new THREE.Quaternion();
         this._translation = camera.position.clone();
         this._roomBounds = roomBounds;
         this._surfaces = room.surfaces;
+        this._surfaces2 = room2.surfaces;
         this._scene = scene;
         this._renderer = renderer;
+
+
+        this.curRoom = curRoom;
+        this.portalRoom = portalRoom;
 
         
         this._groundPosition = new THREE.Vector3(0,10,0);
@@ -40,8 +45,13 @@ export class FirstPersonCamera{
         
         this.center2 = new THREE.Vector3();
         roomBounds2.getCenter(this.center2);
+
+        this._roomBounds2 = roomBounds2;
         
         this.portalCamera.position.copy(this.center2);
+
+        this.portalGeom = new THREE.PlaneGeometry(40,40);
+        this.portalObj;
 
 
         // https://discourse.threejs.org/t/getting-screen-coords-in-shadermaterial-shaders/23783/2
@@ -109,6 +119,7 @@ export class FirstPersonCamera{
 
           
 this.portalCamera.updateProjectionMatrix();
+this.clippingPlane = new THREE.Plane();
 
 this.portalMaterial = new THREE.ShaderMaterial( {
 
@@ -150,6 +161,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
 
 
 
+
         
     }
 
@@ -157,8 +169,8 @@ this.portalMaterial = new THREE.ShaderMaterial( {
     
         if(!(document.pointerLockElement===null)){
             this._updateRotation(delta);
-            this._updateCamera(delta);
-            this._updateTranslation(delta);
+         
+        
             
 
             if(this._cooldownTimer.getElapsedTime() >= this._cooldown){
@@ -168,9 +180,14 @@ this.portalMaterial = new THREE.ShaderMaterial( {
             this._input.update(delta);
 
 
+            this._updateCamera(delta);
             if(this._portal){
                 this._updatePortal();
             }
+
+  
+
+            this._updateTranslation(delta);
 
            
         }
@@ -210,11 +227,14 @@ this.portalMaterial = new THREE.ShaderMaterial( {
 
 
         var portalFromCenter = this._portal.position.clone().add(new THREE.Vector3(0,-10,0)).sub(curRoomCenter);
-
+        var modifiedPortalFromCenter = this._portal.position.clone().add(new THREE.Vector3().multiplyVectors(this.portalNormal,  roomSize)).add(new THREE.Vector3(0,-10,0)).sub(curRoomCenter);
 
         var posFromPortal = this._camera.position.clone().sub(this._portal.position.clone().add(new THREE.Vector3(0,-10,0)));
-        var newPos = posFromPortal //.multiplyScalar(-1) //.add(new THREE.Vector3()) //0,roomSize.y,0
-       
+        var camPosFromPortal = posFromPortal //.multiplyScalar(-1) //.add(new THREE.Vector3()) //0,roomSize.y,0
+        var portalPos = this.center2.clone().add(modifiedPortalFromCenter);
+
+
+     
 
        // this._camera.rotation
 
@@ -225,13 +245,19 @@ this.portalMaterial = new THREE.ShaderMaterial( {
      
        //.sub(new THREE.Vector3(-this.portalNormal.x*roomSize.x/2,-this.portalNormal.y*roomSize.y/2-10,-this.portalNormal.z*roomSize.z/2)
        
-       this.portalCamera.position.copy(newPos.add(this.center2))
+       this.portalCamera.position.copy(camPosFromPortal.add(portalPos))
+
+      // var obliqueClipPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(this.portalNormal, portalPos.add(this.portalNormal.multiplyScalar(1)));
+
+
        
        this.portalCamera.rotation.copy(new THREE.Euler().setFromVector3(new THREE.Vector3(this._camera.rotation.x, this._camera.rotation.y,this._camera.rotation.z)));
 
        
        // ----------------------------------
        
+
+
        
        // set portal camera rotaion
 
@@ -243,7 +269,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
 
 
 
-        this.portalCamera.near = this._camera.position.clone().distanceTo(this._portal.position.clone().add(new THREE.Vector3(0,-10,0)));
+        this.portalCamera.near = this._camera.position.clone().distanceTo(this._portal.position.clone().add(new THREE.Vector3(0,-10,0)))*0.5;
         this.portalCamera.updateProjectionMatrix();
 
         this.portalMaterial.uniforms.renderTexture.value = this.renderTarget.texture;
@@ -297,7 +323,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
         var normal = hits[0].face.normal;
 
         this.portalNormal = normal;
-
+     
         //wDir.multiplyScalar(THREE.Object3D.DefaultUp.clone().dot(normal))
 
         rotation.lookAt(eye, position, THREE.Object3D.DefaultUp);
@@ -312,7 +338,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
 
         // )
         
-        const decalGeometry = new THREE.PlaneGeometry(40,40);
+    
 
 
         const loader = new THREE.TextureLoader();
@@ -345,7 +371,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
         // decalMaterial.stencilZPass = THREE.ReplaceStencilOp;
         // decalMaterial.depthWrite = false;
 
-        var newPortal = new THREE.Mesh(decalGeometry, this.portalMaterial);
+        var newPortal = new THREE.Mesh(this.portalGeom, this.portalMaterial);
         newPortal.recieveShadow = true;
 
         
@@ -492,12 +518,73 @@ this.portalMaterial = new THREE.ShaderMaterial( {
 
         //var sphereCollider = new THREE.Sphere(testTranslation, 9);
         var smallBox = this._roomBounds.clone();
-        smallBox.expandByScalar(-3);
+        smallBox.expandByScalar(-0.2);
 
 
         if(smallBox.containsPoint(testTranslation)){
             this._translation.copy(testTranslation);
-        } else if (!this._isGrounded){
+        } 
+        
+        if(!smallBox.containsPoint(testTranslation) || this._isGrounded) {
+
+            if(this._portal){
+                var pBounds = this._portal.userData.bounds.clone();
+       
+                // check if collides with portal
+                pBounds.expandByVector(new THREE.Vector3(Math.abs(this.portalNormal.x), Math.abs(this.portalNormal.y)*10/3, Math.abs(this.portalNormal.z)).multiplyScalar(3))
+                //pBounds.translate(this.portalNormal.clone().multiplyScalar(-3/2))
+              
+                    if (pBounds.containsPoint(testTranslation)){
+
+                        // check if collides with room
+
+                        console.log("collides portal")
+
+                        var newRBounds = this._roomBounds2.clone();
+
+                        var newPosCamera = this.portalCamera.position.clone().add(testTranslation.clone().sub(this._translation));
+                        //.add(new THREE.Vector3().multiplyVectors(new THREE.Vector3(0,this.portalNormal.y,0).normalize(),new THREE.Vector3(0,2*this._gravity,0)))
+
+                        if(this.portalNormal.y > 0){
+                            this._groundPosition = new THREE.Vector3(0,0,0);
+                        }
+
+
+                        if(newRBounds.containsPoint(newPosCamera)){
+                 
+                            this._translation = this.portalCamera.position.clone().add(testTranslation.clone().sub(this._translation));
+            
+                            var tempBounds  = this._roomBounds;
+                            
+                            this._roomBounds = this._roomBounds2;
+                            this._roomBounds2 = tempBounds;
+                            
+                            this._groundPosition = new THREE.Vector3(0,this._roomBounds.min.y+10,0);
+            
+            
+                            var tempSurfaces  = this._surfaces;
+                            this._surfaces = this._surfaces2;
+                            this._surfaces2 = tempSurfaces;
+            
+            
+                            this.center2 = new THREE.Vector3();
+                            this._roomBounds2.getCenter(this.center2);
+            
+            
+                            var tempRoom = this.portalRoom;
+                            this.portalRoom = this.curRoom;
+                            this.curRoom = tempRoom;
+                        }
+        
+
+                    }
+                }
+        
+
+
+        }
+        
+        if (!this._isGrounded){
             this._translation.add(up);
         }
       
@@ -512,7 +599,7 @@ this.portalMaterial = new THREE.ShaderMaterial( {
 
         // convert to spherical coordinates
         this._phi += -xh*5;
-        this._theta = THREE.MathUtils.clamp(this._theta + -yh*5, -Math.PI / 3, Math.PI / 3);
+        this._theta = THREE.MathUtils.clamp(this._theta + -yh*5, -Math.PI / 2, Math.PI / 2);
      
 
   
