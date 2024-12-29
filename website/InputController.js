@@ -1,4 +1,4 @@
-// https://www.youtube.com/watch?v=oqKzxPMLWxo&ab_channel=SimonDev
+// code created by following tutorial by SimonDev: https://www.youtube.com/watch?v=oqKzxPMLWxo&ab_channel=SimonDev
 export class InputController{
     constructor(){
         this._initialize();

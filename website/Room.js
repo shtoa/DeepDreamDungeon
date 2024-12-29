@@ -1,4 +1,6 @@
-import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
+
+
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
 
 export class Room {
 
@@ -46,8 +48,6 @@ export class Room {
 
     generateWalls(_){
 
-       
-
         // rename variables
 
         var lGM  = new THREE.PlaneGeometry( this._size.x, this._size.y );
@@ -55,16 +55,11 @@ export class Room {
         var leftWall = new THREE.Mesh( lGM, new THREE.MeshPhongMaterial( ) );
         leftWall.position.set(this._center.x, this._center.y, this._center.z - (this._size.z/2));
   
-
         var rGM  = new THREE.PlaneGeometry( this._size.x, this._size.y );
         rGM.rotateY(Math.PI)
 
-
         var rightWall = new THREE.Mesh( rGM, new THREE.MeshPhongMaterial(  ) );
         rightWall.position.set(this._center.x, this._center.y, this._center.z + (this._size.z/2));
-
-
-
 
         var fGM =  new THREE.PlaneGeometry( this._size.z, this._size.y);
         fGM.rotateY(-Math.PI/2)

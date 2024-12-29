@@ -3,7 +3,7 @@
 
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
-// https://codepen.io/mediapipe-preview/pen/zYamdVd?editors=1010
+
 import * as HandHelper from "./handTrackHelper.js" 
 import * as FirstPersonCamera from "./FirstPersonCamera.js"
 import * as Room from "./Room.js"
@@ -34,13 +34,12 @@ var handHelper;
 var portalRoom;
 
 const preload = async() =>{
-    //handpose = ml5.handPose(); //video, options;
-    // await handpose.ready;
-    handHelper = await new HandHelper.HandTrackHelper();
-     
 
+    handHelper = new HandHelper.HandTrackHelper();
+    await handHelper.initVideo();
+    await handHelper.createGestureRecognizer();
 
-    await fetch("/themes/themes.txt").then(res=> res.text())
+    await fetch("/themes/themes.txt").then(res=> res.text()) // TODO: Move to backend
     .then(text=>{
         themes = text.split(/\r\n|\n/);
     });
@@ -51,8 +50,6 @@ const preload = async() =>{
 
 const setup = async() =>{
     
-    await handHelper.initVideo();
-   // await handHelper.getPose(); // test to prevent stuttering when shooting
     init();
 
 }
@@ -126,8 +123,9 @@ function init() {
 
     var roomBounds = new THREE.Box3(new THREE.Vector3(0,0,0), new THREE.Vector3(400,100,200));
 
-    const helper = new THREE.Box3Helper( roomBounds, 0xffff00 );
-    scene.add( helper );
+    // helper for rooms
+    //const helper = new THREE.Box3Helper( roomBounds, 0xffff00 );
+    //scene.add( helper );
 
     room = new Room.Room(roomBounds, themes[themeIndex]);
 
@@ -253,7 +251,7 @@ function init() {
     
     room.surfaces.push(testMesh);
 
-    renderTarget = new THREE.WebGLRenderTarget( 512, 512, { format: THREE.RGBFormat } );
+    renderTarget = new THREE.WebGLRenderTarget( 512, 512, { format: THREE.RGBFormat} );
 
     animate();
 
@@ -368,6 +366,9 @@ var changingScene = false;
 var isGestureTimeOut = false;
 var gestureTimeOut = 1;
 
+
+var unMappedActionsList = ["None", "Open_Palm", "Closed_Fist", "Pointing_Up", "Pointing_Down"]
+
 function animate() {
 
     requestAnimationFrame( animate );
@@ -388,56 +389,51 @@ function animate() {
     
     const nowInMs = Date.now();
 
+    handHelper.getPose().then((action) => {
 
-
-    if(gestureTimeoutClock.getElapsedTime() > gestureTimeOut){
-      
-        gestureTimeoutClock.stop();
-        isGestureTimeOut = false;
-    }
-
-    if (changingScene && !isGestureTimeOut){
-    
-  
-        var action = handHelper.getPose();
+        if(gestureTimeoutClock.getElapsedTime() > gestureTimeOut){
         
-        if(action != "No_Hands"){
-
-            if(actionList.length == 0 && action != "None" && action != "Open_Palm" && action != "Closed_Fist" && action != "Pointing_Up" && action != "Pointing_Down"){
-                actionList.push(action);
-                isGestureTimeOut = true;
-                gestureTimeoutClock.start();
-                actionsToText(actionList);
-            } 
-            
-            if(action == "Open_Palm"){
-                processIndex(actionList);
-                updateGestureText(`Teleported to: \n ${themes[themeIndex]}`);
-            }
-            
-            if (!actionList.includes(action) && action != "None" && action != "Open_Palm" && action != "Closed_Fist" && action != "Pointing_Up" && action != "Pointing_Down"){
-                actionList.push(action);
-                isGestureTimeOut = true;
-                gestureTimeoutClock.start();
-                actionsToText(actionList);
-            }
-
+            gestureTimeoutClock.stop();
+            isGestureTimeOut = false;
         }
-        
-    
-    
-    //console.log(actionList);
 
-    
-}
+        if (changingScene && !isGestureTimeOut){
+        
+
+            //var action = handHelper.getPose()
+
+            handHelper.getPose().then((action)=>{
+            
+            if(action != "No_Hands"){
+
+                if(actionList.length == 0 && !unMappedActionsList.includes(action)){
+                    actionList.push(action);
+                    isGestureTimeOut = true;
+                    gestureTimeoutClock.start();
+                    actionsToText(actionList);
+                } 
+                
+                if(action == "Open_Palm"){
+                    processIndex(actionList);
+                    updateGestureText(`Teleported to: \n ${themes[themeIndex]}`);
+                }
+                
+                if (!actionList.includes(action) && !unMappedActionsList.includes(action)){
+                    actionList.push(action);
+                    isGestureTimeOut = true;
+                    gestureTimeoutClock.start();
+                    actionsToText(actionList);
+                }
+
+            }
+
+            })
+            
+        }
+    })
 
     fpsCamera.update(delta);
-renderer.render( scene, camera );
-
-
-
-
-    
+    renderer.render( scene, camera );
 
 }
 

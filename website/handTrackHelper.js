@@ -4,8 +4,6 @@ import {
     FilesetResolver,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
   
-
-
 /* 
 
 Hand Track Helper Class 
@@ -16,8 +14,7 @@ Hand Track Helper Class
 
 */
 
-
-
+// code developed myself based on code from: https://codepen.io/mediapipe-preview/pen/zYamdVd?editors=1010
 
 export class HandTrackHelper {
 
@@ -26,7 +23,7 @@ export class HandTrackHelper {
     video;
 
     constructor(){
-        this.createGestureRecognizer();
+
     }
 
 
@@ -41,7 +38,7 @@ export class HandTrackHelper {
             "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
             delegate: "GPU"
         },
-        runningMode: "VIDEO"
+        runningMode: "video"
         });
 
     };
@@ -69,7 +66,7 @@ export class HandTrackHelper {
 
     }
 
-    getPose(){
+    async getPose(){
         
         const nowInMs = Date.now();
         var result = this.gestureRecognizer.recognizeForVideo(this.video, nowInMs);
