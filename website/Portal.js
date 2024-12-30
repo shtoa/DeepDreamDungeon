@@ -1,15 +1,19 @@
 // class for oneway Portal
 
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
+
+
 export class Portal{
 
-    constructor(scene, renderer){
+    constructor(scene, renderer, playerCamera, inPortalTransform, secondPortalPos){
 
         this._scene = scene;
         this._renderer = renderer;
+        this._playerCamera = playerCamera;
 
         // intialize renderTarget for the portal
         this.renderTarget = new THREE.WebGLRenderTarget( 1024, 1024);
-        this.portalCamera = new THREE.PerspectiveCamera( 45, this._camera.aspect, 1, 2000 ); // make sure to scale when resizing 
+        this.portalCamera = new THREE.PerspectiveCamera( 45, this._playerCamera.aspect, 1, 2000 ); // make sure to scale when resizing 
         
         this.portalGeom = new THREE.PlaneGeometry(40,40);
 
@@ -89,6 +93,25 @@ export class Portal{
 
         this.portalMesh = new THREE.Mesh(this.portalGeom, this.portalMaterial);
 
+
+        // portal transform 
+        this.position = inPortalTransform.position;
+        this.rotation = inPortalTransform.rotation;
+
+        this.secondPortalPos = secondPortalPos;
+
+        this.portalMesh.position.copy(this.position);
+        this.portalMesh.rotation.copy(this.rotation);
+        
+
+    }
+
+    _placePortal(){
+        this._scene.add(this.portalMesh);
+    }
+
+    _removePortal(){
+        this._scene.remove(this.portalMesh);
     }
 
     _updatePortal(){
@@ -112,22 +135,22 @@ export class Portal{
         this.portalCamera.updateProjectionMatrix();
     }
 
-        // render the portal to the render Texture
-        _renderPortal(){
-        
-            // render the scene from the portal camera to the render texture
-            this._renderer.setRenderTarget(this.renderTarget); // set the renderTarget of the renderer to the portal render Target
-            this._portal.visible = false; // do not render the plane on which the portal will be in the portal scene (avoids recurssion [but can be later implemented])
-            this._renderer.render(this._scene, this.portalCamera); // render the other room to the render Target
-            
-            // reset the camera to render from the player camera
-            this._portal.visible = true; // set the portal ba
-            this._renderer.setRenderTarget(null); // reset the renderer to render the scene from the main camera
-            
-            // set the new portal render target to the portal teture
-            this.portalMaterial.uniforms.renderTexture.value = this.renderTarget.texture;
+    // render the portal to the render Texture
+    _renderPortal(){
     
-        }
+        // render the scene from the portal camera to the render texture
+        this._renderer.setRenderTarget(this.renderTarget); // set the renderTarget of the renderer to the portal render Target
+        this.portalMesh.visible = false; // do not render the plane on which the portal will be in the portal scene (avoids recurssion [but can be later implemented])
+        this._renderer.render(this._scene, this.portalCamera); // render the other room to the render Target
+        
+        // reset the camera to render from the player camera
+        this.portalMesh.visible = true; // set the portal ba
+        this._renderer.setRenderTarget(null); // reset the renderer to render the scene from the main camera
+        
+        // set the new portal render target to the portal teture
+        this.portalMaterial.uniforms.renderTexture.value = this.renderTarget.texture;
+
+    }
 
 
     onWindowResize() {

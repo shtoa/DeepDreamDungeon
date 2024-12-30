@@ -1,7 +1,8 @@
-import * as InputController from "./InputController.js"
+import {InputController} from "./InputController.js"
 //import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
 
+import {Portal} from "./Portal.js";
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
 
 import { DecalGeometry } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/geometries/DecalGeometry.js';
@@ -12,7 +13,7 @@ export class FirstPersonCamera{
     constructor(camera, roomBounds, room, scene, renderer, roomBounds2, room2, curRoom, portalRoom){
         
         this._camera = camera;
-        this._input = new InputController.InputController();
+        this._input = new InputController();
         
         //#region rotation and looking around
         this._phi = 0;
@@ -119,7 +120,7 @@ export class FirstPersonCamera{
                 // Add a mask to give portal and elliptical shape
                 uniforms: {
                     portalMask: {value: new THREE.TextureLoader().load("./portalMask.png")},
-                    renderTexture: {value: this.renderTarget.texture},
+                    renderTexture: {value:  new THREE.TextureLoader().load("./portalMask.png")},//this.renderTarget.texture},
                 },
             
                 // Declare Vertex and Fragment Shader
@@ -149,8 +150,12 @@ export class FirstPersonCamera{
             this._input.update(delta);
 
             this._updateCamera(delta);
-            if(this._portal){
-                this._updatePortal();
+            // if(this._portal){
+            //     this._updatePortal();
+            // }
+
+            if(this.portalTest){
+                this.portalTest._updatePortal();
             }
 
             this._updateTranslation(delta);
@@ -301,8 +306,23 @@ export class FirstPersonCamera{
         // try to place portal within bounds of surface
         this._placePortalOnSurface(hit, newPortal);
 
+
+
+
+
         this._scene.add(this._portal); // add the entrance portal to scene;
         this._calculateExitPortalPosition(); // calculate position of exit portal
+
+        if(this.portalTest){
+            this.portalTest._removePortal();
+        
+        }
+  
+
+        this.portalTest = new Portal(this._scene, this._renderer, this._camera, this._portal, this.secondPortalPos);
+        this.portalTest._placePortal();
+    
+     
 
     }
 
@@ -406,6 +426,8 @@ export class FirstPersonCamera{
 
         // handle jumping next frame
         // FIX ME: Check Order
+        // FIX ME: Check visual bug
+
         if(this._translation.y > this._groundPosition.y){
             this._verticalVelocity -= this._gravity * delta;
             
@@ -450,10 +472,10 @@ export class FirstPersonCamera{
 
             var newRBounds = this._roomBounds2.clone();
 
-            var newPosCamera = this.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation));
+            var newPosCamera = this.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation)); // add the new translation to the camera
 
             if(this.portalNormal.y != 0){
-                this._groundPosition = new THREE.Vector3(0,this._roomBounds.min.y - 10,0);
+                this._groundPosition = new THREE.Vector3(0,this._roomBounds.min.y-10,0);
             }
 
             if(newRBounds.containsPoint(newPosCamera)){
@@ -463,8 +485,8 @@ export class FirstPersonCamera{
             // FIX ME: Player Does not fully fall Through Floor
             // FIX ME: Create a copy / clone constructor to easily create new object 
 
+              
                 this._translation = this.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation));
-
                 var tempBounds  = this._roomBounds;
                 
                 this._roomBounds = this._roomBounds2;
@@ -482,9 +504,11 @@ export class FirstPersonCamera{
                 var tempRoom = this.portalRoom;
                 this.portalRoom = this.curRoom;
                 this.curRoom = tempRoom;
+
+           
             } 
         } else {
-            this._groundPosition = new THREE.Vector3(0,this._roomBounds.min.y + 10,0);
+            this._groundPosition = new THREE.Vector3(0,this._roomBounds.min.y + 10,0); // stops player from sinking in portal when quickly going away from it
         }
     } 
   
