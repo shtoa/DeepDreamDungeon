@@ -5,7 +5,7 @@ import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/
 
 export class Portal{
 
-    constructor(scene, renderer, playerCamera, inPortalTransform, secondPortalPos){
+    constructor(scene, renderer, playerCamera, secondPortalPos){
 
         this._scene = scene;
         this._renderer = renderer;
@@ -91,27 +91,88 @@ export class Portal{
 
         document.addEventListener("resize", this.onWindowResize.bind(this));
 
-        this.portalMesh = new THREE.Mesh(this.portalGeom, this.portalMaterial);
+        this._portal = new THREE.Mesh(this.portalGeom, this.portalMaterial);
 
 
         // portal transform 
-        this.position = inPortalTransform.position;
-        this.rotation = inPortalTransform.rotation;
-
         this.secondPortalPos = secondPortalPos;
+        
+    }
 
-        this.portalMesh.position.copy(this.position);
-        this.portalMesh.rotation.copy(this.rotation);
+    _placePortal(hit, inPortalTransform){
+        this._placePortalOnSurface(hit,inPortalTransform);
+        
+        // this._portal.position.copy(this.position);
+        // this._portal.rotation.copy(this.rotation);
+
+
         
 
+        this._scene.add(this._portal);
     }
 
-    _placePortal(){
-        this._scene.add(this.portalMesh);
+    _placePortalOnSurface(hit, newPortal){
+
+        this._portal.position.copy(newPortal.position);
+        this._portal.rotation.copy(newPortal.rotation);
+        
+        this._portal.userData.bounds = new THREE.Box3().setFromObject(newPortal , true);
+
+        this._portal.userData.bounds.min = new THREE.Vector3(Math.round(this._portal.userData.bounds.min.x*10)/10, Math.round(this._portal.userData.bounds.min.y*10)/10, Math.round(this._portal.userData.bounds.min.z*10)/10);
+        this._portal.userData.bounds.max = new THREE.Vector3(Math.round(this._portal.userData.bounds.max.x*10)/10, Math.round(this._portal.userData.bounds.max.y*10)/10, Math.round(this._portal.userData.bounds.max.z*10)/10)
+
+        var portalBounds = this._portal.userData.bounds;
+        var portalSize = new THREE.Vector3();
+        portalBounds.getSize(portalSize);
+
+        if(!hit.object.userData.bounds.containsBox(this._portal.userData.bounds)){
+
+            if(!hit.object.userData.bounds.containsPoint(this._portal.userData.bounds.min)){
+                
+                var portalMinBounds = this._portal.userData.bounds.min;
+                var hitMinBounds = hit.object.userData.bounds.min;
+                
+                if(portalMinBounds.x < hitMinBounds.x){
+                    this._portal.position.x = hitMinBounds.x+portalSize.x/2;
+                } 
+                if(portalMinBounds.y < hitMinBounds.y){
+                    this._portal.position.y = hitMinBounds.y+portalSize.y/2;
+                } 
+                if(portalMinBounds.z < hitMinBounds.z){
+                    this._portal.position.z = hitMinBounds.z+portalSize.z/2;
+                } 
+
+            }
+            if(!hit.object.userData.bounds.containsPoint(this._portal.userData.bounds.max)){
+
+                var portalMaxBounds = this._portal.userData.bounds.max;
+                var hitMaxBounds = hit.object.userData.bounds.max;
+
+                if(portalMaxBounds.x > hitMaxBounds.x){
+                    this._portal.position.x = hitMaxBounds.x - portalSize.x/2;
+                } 
+                if(portalMaxBounds.y > hitMaxBounds.y){
+                    this._portal.position.y = hitMaxBounds.y - portalSize.y/2;
+                } 
+                if(portalMaxBounds.z > hitMaxBounds.z){
+                    this._portal.position.z = hitMaxBounds.z - portalSize.z/2;
+                } 
+
+            }
+
+            // update portal bounds
+
+            this._portal.userData.bounds = new THREE.Box3().setFromObject(newPortal , true);
+            this._portal.userData.bounds.min = new THREE.Vector3(Math.round(this._portal.userData.bounds.min.x*10)/10, Math.round(this._portal.userData.bounds.min.y*10)/10, Math.round(this._portal.userData.bounds.min.z*10)/10);
+            this._portal.userData.bounds.max = new THREE.Vector3(Math.round(this._portal.userData.bounds.max.x*10)/10, Math.round(this._portal.userData.bounds.max.y*10)/10, Math.round(this._portal.userData.bounds.max.z*10)/10)
+            
+        }
     }
+
+
 
     _removePortal(){
-        this._scene.remove(this.portalMesh);
+        this._scene.remove(this._portal);
     }
 
     _updatePortal(){
@@ -123,7 +184,7 @@ export class Portal{
 
     _updatePortalCamera(){
         // - calculate camera position
-        var portalCamPosFromPortal = this._playerCamera.position.clone().sub(this.position.clone()); // get relative position of player camera to portal 
+        var portalCamPosFromPortal = this._playerCamera.position.clone().sub(this._portal.position.clone()); // get relative position of player camera to portal 
         var portalCamPos = portalCamPosFromPortal.clone().add(this.secondPortalPos); // add the relative position of camera to the portal position to get position of the portalCamera
 
         /* Note: The Way the Portal Works /// 
@@ -140,11 +201,11 @@ export class Portal{
     
         // render the scene from the portal camera to the render texture
         this._renderer.setRenderTarget(this.renderTarget); // set the renderTarget of the renderer to the portal render Target
-        this.portalMesh.visible = false; // do not render the plane on which the portal will be in the portal scene (avoids recurssion [but can be later implemented])
+        this._portal.visible = false; // do not render the plane on which the portal will be in the portal scene (avoids recurssion [but can be later implemented])
         this._renderer.render(this._scene, this.portalCamera); // render the other room to the render Target
         
         // reset the camera to render from the player camera
-        this.portalMesh.visible = true; // set the portal ba
+        this._portal.visible = true; // set the portal ba
         this._renderer.setRenderTarget(null); // reset the renderer to render the scene from the main camera
         
         // set the new portal render target to the portal teture
@@ -157,5 +218,10 @@ export class Portal{
 
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
+    }
+
+
+    linkPortal(secondPortalPos){
+        this.secondPortalPos = secondPortalPos;
     }
 }
