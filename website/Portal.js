@@ -1,12 +1,12 @@
 // class for oneway Portal
 
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
-
+import {scene, renderer} from './Index.js';
 
 export class Portal{
 
-    constructor(scene, renderer, playerCamera, secondPortalPos){
-
+    constructor(playerCamera, secondPortalPos){
+        
         this._scene = scene;
         this._renderer = renderer;
         this._playerCamera = playerCamera;
@@ -71,7 +71,7 @@ export class Portal{
                 // Set Render Texturew to Texture of Portla
                 // Add a mask to give portal and elliptical shape
                 uniforms: {
-                    portalMask: {value: new THREE.TextureLoader().load("./portalMask.png")},
+                    portalMask: {value: scene.userData.portalMask}, // preload image in scene
                     renderTexture: {value: this.renderTarget.texture},
                 },
             
@@ -223,5 +223,10 @@ export class Portal{
 
     linkPortal(secondPortalPos){
         this.secondPortalPos = secondPortalPos;
+    }
+
+
+    _onCollision(){
+        // Add teleportation logic here
     }
 }

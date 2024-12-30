@@ -10,7 +10,7 @@ import { DecalGeometry } from 'https://cdn.skypack.dev/three@0.128.0/examples/js
 // Code Adapted from tutorial by Simon Dev: https://www.youtube.com/watch?v=oqKzxPMLWxo&ab_channel=SimonDev
 
 export class FirstPersonCamera{
-    constructor(camera, roomBounds, room, scene, renderer, roomBounds2, room2, curRoom, portalRoom){
+    constructor(camera, roomBounds, room, roomBounds2, room2, curRoom, portalRoom){
         
         this._camera = camera;
         this._input = new InputController();
@@ -49,93 +49,16 @@ export class FirstPersonCamera{
         this._roomBounds = roomBounds;
         this._surfaces = room.surfaces;
         this._surfaces2 = room2.surfaces;
-        this._scene = scene;
-        this._renderer = renderer;
         this.curRoom = curRoom;
         this.portalRoom = portalRoom;
 
-        // intialize renderTarget for the portal
-        this.renderTarget = new THREE.WebGLRenderTarget( 1024, 1024);
-        this.portalCamera = new THREE.PerspectiveCamera( 45, this._camera.aspect, 1, 2000 );
-        
         this.center2 = new THREE.Vector3();
         roomBounds2.getCenter(this.center2);
 
         this._roomBounds2 = roomBounds2;
 
-        this.portalGeom = new THREE.PlaneGeometry(40,40);
-
-        // Used Tutorial to create Screen Space coords for portal shader https://discourse.threejs.org/t/getting-screen-coords-in-shadermaterial-shaders/23783/2
-
-        // this.vertexShader = `
-        //     varying vec4 vPos;
-        //     varying vec4 testPos;
-        //     uniform mat4 camProj;
-        //     uniform mat4 viewMat;
-        //     uniform mat4 model;
-        //     varying vec2 vUv;
-        //     void main() {
-        //         // projectionMatrix
-        //         vPos = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-        //         //vPos = camProj * viewMat * model * vec4( position, 1.0 );
-        //         //vPos = vec4(position, 1.0);
-
-        //         //vPos = camProj * viewMat * vec4( position, 1.0 );
-        //         gl_Position = vPos;
-        //         vUv = uv;
-        //         testPos = camProj * model * vec4( position, 1.0 );
-
-        //     }
-        // `;
-        // this.fragmentShader = `
-        //     varying vec4 vPos;
-        //     varying vec4 testPos;
-        //     uniform sampler2D renderTexture;
-        //     uniform sampler2D portalMask;
-
-        //     varying vec2 vUv;
-
-        
-        //     void main() {
-        //         vec2 vCoords = vPos.xy;
-        //         vCoords /= vPos.w;
-        //         vCoords = vCoords * 0.5 + 0.5;
-        //         vec2 suv = vCoords;
-                
-        //         vec4 pMask = texture2D(portalMask,vUv);
-        //         vec4 portal = texture2D(renderTexture, suv);
-
-        //         vec4 maskedPortal = vec4(portal.x,portal.y,portal.z,portal.w);
-                
-        //         if(pMask.x == 1.0){
-        //             discard;
-        //         }
-
-        //         gl_FragColor = maskedPortal;
-        //     }
-        //     `;
-        // this.portalMaterial = new THREE.ShaderMaterial( {
-
-        //         // Set Render Texturew to Texture of Portla
-        //         // Add a mask to give portal and elliptical shape
-        //         uniforms: {
-        //             portalMask: {value: new THREE.TextureLoader().load("./portalMask.png")},
-        //             renderTexture: {value:  new THREE.TextureLoader().load("./portalMask.png")},//this.renderTarget.texture},
-        //         },
-            
-        //         // Declare Vertex and Fragment Shader
-        //         vertexShader: this.vertexShader,
-        //         fragmentShader: this.fragmentShader,
-                
-        //         // Pervent Z fighting
-        //         polygonOffset: true,
-        //         polygonOffsetFactor: -20,
-
-        //         uniformsNeedUpdate: true  
-            
-        //     } );
-
         //#endregion
+
     }
 
     update(delta){
@@ -150,9 +73,6 @@ export class FirstPersonCamera{
             this._input.update(delta);
 
             this._updateCamera(delta);
-            // if(this._portal){
-            //     this._updatePortal();
-            // }
 
             if(this.portalTest){
                 this.portalTest._updatePortal();
@@ -182,35 +102,10 @@ export class FirstPersonCamera{
         this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
     }
 
-    // _updatePortal(){
-        
-    //    this._updatePortalCamera(); // update position and rotation of the camera based on the relative position of the current camera 
-    //    this._renderPortal(); // render portal scene to the renderTarget
-
-    // }
-
-    // updates portalCamera position relative to the exit portal
-    // based on the position of the camera to the entrance portal
-    // _updatePortalCamera(){
-        
-    //     // - calculate camera position
-    //     var portalCamPosFromPortal = this._camera.position.clone().sub(this._portal.position.clone()); // get relative position of player camera to portal 
-    //     var portalCamPos = portalCamPosFromPortal.clone().add(this.secondPortalPos); // add the relative position of camera to the portal position to get position of the portalCamera
-
-    //     /* Note: The Way the Portal Works /// 
-    //     For the Portal Illusion to work the position and rotation of the second camera relative to its portal needs to be the same as the players camera to the input portal. */
-
-    //    // update position and rotation
-    //    this.portalCamera.position.copy(portalCamPos);
-    //    this.portalCamera.rotation.copy(this._camera.rotation); // for illusion to work rotation of camera relative to the other portal needs to be the same
-    //    this.portalCamera.updateProjectionMatrix();
-
-    // }
-
+    
     _calculateExitPortalPosition(){
        
         // TODO: Move this Section as Properties of Rooms
-
         // currentRoom 
 
         var curRoomSize = new THREE.Vector3();
@@ -228,9 +123,7 @@ export class FirstPersonCamera{
         
         var roomSizeRatio = destinationRoomSize.length() / curRoomSize.length();
         
-        
         // calculate position 
-
         var curPortalPosFromCenter = this.portalTest._portal.position.clone().sub(curRoomCenter); // the current position of the portal from the roomCenter
         var newPortalPosFromCenter = curPortalPosFromCenter.clone().multiplyScalar(roomSizeRatio); // the position of the portal in the other room
         newPortalPosFromCenter = newPortalPosFromCenter.reflect(this.portalNormal); // reflect the portal position to be on the opposite side of the destination room
@@ -238,29 +131,11 @@ export class FirstPersonCamera{
         this.secondPortalPos = newPortalPosFromCenter.clone().add(destinationRoomCenter);
     }
 
-    // // render the portal to the render Texture
-    // _renderPortal(){
-        
-    //     // render the scene from the portal camera to the render texture
-    //     this._renderer.setRenderTarget(this.renderTarget); // set the renderTarget of the renderer to the portal render Target
-    //     this._portal.visible = false; // do not render the plane on which the portal will be in the portal scene (avoids recurssion [but can be later implemented])
-    //     this._renderer.render(this._scene, this.portalCamera); // render the other room to the render Target
-        
-    //     // reset the camera to render from the player camera
-    //     this._portal.visible = true; // set the portal ba
-    //     this._renderer.setRenderTarget(null); // reset the renderer to render the scene from the main camera
-        
-    //     // set the new portal render target to the portal teture
-    //     this.portalMaterial.uniforms.renderTexture.value = this.renderTarget.texture;
-
-    // }
-
+   
     // run place portal function when the gun fires
     
     _placePortal(){
         
-        //this._scene.remove(this._portal); // remove previous portal
-
         const raycaster = new THREE.Raycaster(); // intialize raycaster 
         raycaster.setFromCamera({x:0,y:0}, this._camera); // 
 
@@ -289,7 +164,13 @@ export class FirstPersonCamera{
         const euler = new THREE.Euler();
         euler.setFromRotationMatrix(rotation);
 
-        var newPortal = new THREE.Mesh(this.portalGeom, this.portalMaterial);
+        if(this.portalTest){
+            this.portalTest._removePortal(); // clean up previous portal if it exists
+        }
+
+        this.portalTest = new Portal(this._camera); // create entry portal
+
+        var newPortal = new THREE.Mesh(this.portalTest.portalGeom, this.portalMaterial);
         newPortal.recieveShadow = true;
 
         newPortal.position.copy(hits[0].point) 
@@ -304,19 +185,16 @@ export class FirstPersonCamera{
 
         const hit = hits[0]
         
-        if(this.portalTest){
-            this.portalTest._removePortal();
-        }
-
+     
         if(this.outPortal){
             this.outPortal._removePortal();
         }
   
-        this.portalTest = new Portal(this._scene, this._renderer, this._camera);
+     
         this.portalTest._placePortal(hit, newPortal);
 
 
-        this.outPortal = new Portal(this._scene, this._renderer, this._camera);
+        this.outPortal = new Portal(this._camera); // create exit portal 
         this._calculateExitPortalPosition(); // calculate position of exit portal
         this.outPortal.position = this.secondPortalPos;   
         
@@ -324,64 +202,7 @@ export class FirstPersonCamera{
 
     }
 
-    // _placePortalOnSurface(hit, newPortal){
-        
-    //     this._portal = newPortal;
-    //     this._portal.userData.bounds = new THREE.Box3().setFromObject(newPortal , true);
-    //     this._portal.userData.bounds.min = new THREE.Vector3(Math.round(this._portal.userData.bounds.min.x*10)/10, Math.round(this._portal.userData.bounds.min.y*10)/10, Math.round(this._portal.userData.bounds.min.z*10)/10);
-    //     this._portal.userData.bounds.max = new THREE.Vector3(Math.round(this._portal.userData.bounds.max.x*10)/10, Math.round(this._portal.userData.bounds.max.y*10)/10, Math.round(this._portal.userData.bounds.max.z*10)/10)
-
-    //     var portalBounds = this._portal.userData.bounds;
-    //     var portalSize = new THREE.Vector3();
-    //     portalBounds.getSize(portalSize);
-        
-    //     if(!hit.object.userData.bounds.containsBox(this._portal.userData.bounds)){
-
-    //         if(!hit.object.userData.bounds.containsPoint(this._portal.userData.bounds.min)){
-                
-    //             var portalMinBounds = this._portal.userData.bounds.min;
-    //             var hitMinBounds = hit.object.userData.bounds.min;
-                
-    //             if(portalMinBounds.x < hitMinBounds.x){
-    //                 this._portal.position.x = hitMinBounds.x+portalSize.x/2;
-    //             } 
-    //             if(portalMinBounds.y < hitMinBounds.y){
-    //                 this._portal.position.y = hitMinBounds.y+portalSize.y/2;
-    //             } 
-    //             if(portalMinBounds.z < hitMinBounds.z){
-    //                 this._portal.position.z = hitMinBounds.z+portalSize.z/2;
-    //             } 
-
-    //         }
-    //         if(!hit.object.userData.bounds.containsPoint(this._portal.userData.bounds.max)){
-
-    //             var portalMaxBounds = this._portal.userData.bounds.max;
-    //             var hitMaxBounds = hit.object.userData.bounds.max;
-
-    //             if(portalMaxBounds.x > hitMaxBounds.x){
-    //                 this._portal.position.x = hitMaxBounds.x - portalSize.x/2;
-    //             } 
-    //             if(portalMaxBounds.y > hitMaxBounds.y){
-    //                 this._portal.position.y = hitMaxBounds.y - portalSize.y/2;
-    //             } 
-    //             if(portalMaxBounds.z > hitMaxBounds.z){
-    //                 this._portal.position.z = hitMaxBounds.z - portalSize.z/2;
-    //             } 
-
-    //         }
-
-    //         // update portal bounds
-
-    //         this._portal.userData.bounds = new THREE.Box3().setFromObject(newPortal , true);
-    //         this._portal.userData.bounds.min = new THREE.Vector3(Math.round(this._portal.userData.bounds.min.x*10)/10, Math.round(this._portal.userData.bounds.min.y*10)/10, Math.round(this._portal.userData.bounds.min.z*10)/10);
-    //         this._portal.userData.bounds.max = new THREE.Vector3(Math.round(this._portal.userData.bounds.max.x*10)/10, Math.round(this._portal.userData.bounds.max.y*10)/10, Math.round(this._portal.userData.bounds.max.z*10)/10)
-            
-    //     }
-    // }
-
     _updateTranslation(delta){
-
-
         // handle inputs
         if(this._input._keys["32"] && this._isGrounded){
             this._verticalVelocity += Math.sqrt(this._jumpHeight * 2 * this._gravity);
@@ -416,10 +237,6 @@ export class FirstPersonCamera{
         translationNextFrame.add(left);
         translationNextFrame.add(up);
 
-
-      
-
-
         this._checkCollisions(translationNextFrame, up);
 
         // handle jumping next frame
@@ -434,11 +251,8 @@ export class FirstPersonCamera{
             this._verticalVelocity = 0;
             this._isGrounded = true;
         }
-
-   
-     
     }
-
+    // move into seperate checking class
     _checkCollisions(translationNextFrame,up){
 
         // use shrunk roomBounds to check for collisions
@@ -515,7 +329,6 @@ export class FirstPersonCamera{
              this._translation.add(up);
          }
     }
-
     _updateRotation(delta){
 
         // delta mouse 

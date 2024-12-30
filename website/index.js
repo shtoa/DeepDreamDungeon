@@ -18,7 +18,7 @@ import { PointerLockControls } from 'https://cdn.skypack.dev/three@0.128.0/examp
 
 var camera, scene, renderer
 
-
+export {renderer, scene};
 
 const clock = new THREE.Clock();
 const gestureTimeoutClock = new THREE.Clock();
@@ -90,6 +90,7 @@ function init() {
     
 
     scene = new THREE.Scene();
+    scene.userData.portalMask = new THREE.TextureLoader().load("./portalMask.png");
 
     themeTracker = document.getElementById("currentTheme");
     inputTracker = document.getElementById("handInputs");
@@ -159,9 +160,6 @@ function init() {
         canvas.requestPointerLock();
     }
 
-
-
-
     container.appendChild(canvas);
 
     renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, canvas: canvas } );
@@ -176,7 +174,7 @@ function init() {
     camera.position.set(room._center.x, room._center.y, room._center.z);
 
 
-    fpsCamera = new FirstPersonCamera.FirstPersonCamera(camera, roomBounds, room, scene, renderer, room2.bounds, room2, curRoom, portalRoom);
+    fpsCamera = new FirstPersonCamera.FirstPersonCamera(camera, roomBounds, room, room2.bounds, room2, curRoom, portalRoom);
     //
     var fLoader = new FBXLoader();
     
