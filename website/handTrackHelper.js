@@ -23,7 +23,7 @@ export class HandTrackHelper {
     video;
 
     constructor(){
-
+        // FIX ME: Remove or Add to this
     }
 
 

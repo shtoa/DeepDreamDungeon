@@ -17,6 +17,8 @@ export class Portal{
         
         this.portalGeom = new THREE.PlaneGeometry(40,40);
 
+        this.normal;
+
         // Used Tutorial to create Screen Space coords for portal shader https://discourse.threejs.org/t/getting-screen-coords-in-shadermaterial-shaders/23783/2
 
         this.vertexShader = `
@@ -101,13 +103,6 @@ export class Portal{
 
     _placePortal(hit, inPortalTransform){
         this._placePortalOnSurface(hit,inPortalTransform);
-        
-        // this._portal.position.copy(this.position);
-        // this._portal.rotation.copy(this.rotation);
-
-
-        
-
         this._scene.add(this._portal);
     }
 

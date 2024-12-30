@@ -4,9 +4,9 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
 
-import * as HandHelper from "./handTrackHelper.js" 
-import * as FirstPersonCamera from "./FirstPersonCamera.js"
-import * as Room from "./Room.js"
+import {HandTrackHelper} from "./handTrackHelper.js" 
+import {FirstPersonCamera} from "./FirstPersonCamera.js"
+import {Room} from "./Room.js"
 
   
 import * as OrbitControls from "https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/OrbitControls.js"
@@ -35,7 +35,7 @@ var portalRoom;
 
 const preload = async() =>{
 
-    handHelper = new HandHelper.HandTrackHelper();
+    handHelper = new HandTrackHelper();
     await handHelper.initVideo();
     await handHelper.createGestureRecognizer();
 
@@ -91,6 +91,7 @@ function init() {
 
     scene = new THREE.Scene();
     scene.userData.portalMask = new THREE.TextureLoader().load("./portalMask.png");
+    scene.userData.changingScene = false;
 
     themeTracker = document.getElementById("currentTheme");
     inputTracker = document.getElementById("handInputs");
@@ -128,11 +129,11 @@ function init() {
     //const helper = new THREE.Box3Helper( roomBounds, 0xffff00 );
     //scene.add( helper );
 
-    room = new Room.Room(roomBounds, themes[themeIndex]);
+    room = new Room(roomBounds, themes[themeIndex]);
 
 
     // 400,110,0
-    room2 = new Room.Room(roomBounds.clone().translate(new THREE.Vector3(200,200,200)), themes[3]);
+    room2 = new Room(roomBounds.clone().translate(new THREE.Vector3(200,200,200)), themes[3]);
     curRoom = room;
     portalRoom = room2;
     
@@ -144,6 +145,8 @@ function init() {
         scene.add(surface);
     })
 
+    scene.userData.curRoom = room;
+    scene.userData.destinationRoom = room2;
 
     const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
     grid.material.opacity = 0.2;
@@ -174,40 +177,40 @@ function init() {
     camera.position.set(room._center.x, room._center.y, room._center.z);
 
 
-    fpsCamera = new FirstPersonCamera.FirstPersonCamera(camera, roomBounds, room, room2.bounds, room2, curRoom, portalRoom);
+    fpsCamera = new FirstPersonCamera(camera, room, portalRoom);
     //
-    var fLoader = new FBXLoader();
+    // var fLoader = new FBXLoader();
     
-    fLoader.load("gun.fbx", (object)=>
-    {
+    // fLoader.load("gun.fbx", (object)=>
+    // {
 
-        object.position.set(0.1,-0.08,-0.3)
+    //     object.position.set(0.1,-0.08,-0.3)
 
-        var scale = 0.0008;
-        object.scale.set(scale,scale,scale);
+    //     var scale = 0.0008;
+    //     object.scale.set(scale,scale,scale);
   
-        scene.add(object)
+    //     scene.add(object)
        
-        gunModel = object;
+    //     gunModel = object;
 
-        const video = document.getElementById( 'video' );
-        const texture = new THREE.VideoTexture( video )
+    //     const video = document.getElementById( 'video' );
+    //     const texture = new THREE.VideoTexture( video )
         
   
 
-        console.log(gunModel.children);
-        gunModel.children[1].material.map = texture;
+    //     console.log(gunModel.children);
+    //     gunModel.children[1].material.map = texture;
 
-        gunModel.children.forEach(child => {
-                child.renderOrder = -1
+    //     gunModel.children.forEach(child => {
+    //             child.renderOrder = -1
          
             
-            }
-        )
+    //         }
+    //     )
 
-        object.parent = fpsCamera._camera;
+    //     object.parent = fpsCamera._camera;
 
-    });
+    // });
 
 
 
@@ -395,7 +398,7 @@ function animate() {
             isGestureTimeOut = false;
         }
 
-        if (changingScene && !isGestureTimeOut){
+        if (scene.userData.changingScene && !isGestureTimeOut){
         
 
             //var action = handHelper.getPose()
@@ -469,28 +472,28 @@ async function processIndex(actionList){
 
     themeTracker.innerHTML = curTheme;
 
-    fpsCamera.portalRoom.updateTheme(themes[themeIndex])
+    fpsCamera.destinationRoom.updateTheme(themes[themeIndex])
 
 
 
     actionList.length = 0;
-    changingScene = false;
+    scene.userData.changingScene = false;
 }
        
-var firingAnim;
+// var firingAnim;
 
 
-document.addEventListener("fire", ()=>{
+// document.addEventListener("fire", ()=>{
 
-    if(!firingAnim?.isPlaying()){
-        firingAnim = new TWEEN.Tween(gunModel.rotation).to({x:1},200).yoyo(true)
-        .repeat(1)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start()
-        gunModel.updateMatrix();
-        changingScene = true;
-    }
-});
+//     if(!firingAnim?.isPlaying()){
+//         firingAnim = new TWEEN.Tween(gunModel.rotation).to({x:1},200).yoyo(true)
+//         .repeat(1)
+//         .easing(TWEEN.Easing.Cubic.InOut)
+//         .start()
+//         gunModel.updateMatrix();
+//         changingScene = true;
+//     }
+// });
 
 
 
