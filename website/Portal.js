@@ -211,8 +211,8 @@ export class Portal{
 
     onWindowResize() {
 
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
+        this.portalCamera.aspect = window.innerWidth / window.innerHeight;
+        this.portalCamera.updateProjectionMatrix();
     }
 
 

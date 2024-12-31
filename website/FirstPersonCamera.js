@@ -36,163 +36,36 @@ export class FirstPersonCamera{
 
         //#endregion
 
-        //#region Gun Firing
-        // this._fireEvent = new Event("fire");
-        // document.addEventListener("fire", this._placePortal.bind(this)); // research about this
-        // document.addEventListener("fire", ()=>{console.log("fired")});
-
-        // this._cooldownTimer = new THREE.Clock();
-        // this._cooldown = 0;
-
-
         this.GunController = new GunController(camera);
-
-        //#endregion
-
-        //#region Portal
-        // Move into gun class
-        // this.curRoom = curRoom;
-        // this.destinationRoom = destinationRoom;
-        //#endregion
     }
 
     update(delta){
     
         if(!(document.pointerLockElement===null)){
-            this._updateRotation(delta);
-         
-            // if(this._cooldownTimer.getElapsedTime() >= this._cooldown){
-            //     this._checkFire();
-            // }
+        
+            
+            // order is importants
 
-            this.GunController.update();
-            this._input.update(delta);
+            this._updateRotation(delta);
+            this._updateTranslation(delta);
+
             this._updateCamera(delta);
 
             if(this.portalTest){
                 this.portalTest._updatePortal();
             }
-
-            this._updateTranslation(delta);
+                 
+            this.GunController.update();
+            this._input.update(delta);
+        
         }
     }
-
-
-    // _checkFire(){
-    //     // check cooldown
-    //     if(!this._input._current.leftButton && this._input._previous?.leftButton){
-            
-    //         this._cooldown = 0.5;
-    //         this._cooldownTimer.stop();
-
-    //         document.dispatchEvent(this._fireEvent)
-
-    //         this._cooldownTimer.start();
-    //     }
-    // }
 
     _updateCamera(_){
         this._camera.quaternion.copy(this._rotation);
         this._camera.position.copy(this._translation);
         this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
     }
-
-    
-    // _calculateExitPortalPosition(){
-       
-    //     // TODO: Move this Section as Properties of Rooms
-    //     // currentRoom 
-
-    //     var curRoomSize = new THREE.Vector3();
-    //     this.curRoom.bounds.getSize(curRoomSize);
-
-    //     var curRoomCenter = new THREE.Vector3();
-    //     this.curRoom.bounds.getCenter(curRoomCenter);
-        
-    //     // Destination
-    //     var destinationRoomSize = new THREE.Vector3();
-    //     this.destinationRoom.bounds.getSize(destinationRoomSize);
-
-    //     var destinationRoomCenter = new THREE.Vector3();
-    //     this.destinationRoom.bounds.getCenter(destinationRoomCenter); // FIX ME: Move this to actual room class
-        
-    //     var roomSizeRatio = destinationRoomSize.length() / curRoomSize.length();
-        
-    //     // calculate position 
-    //     var curPortalPosFromCenter = this.portalTest._portal.position.clone().sub(curRoomCenter); // the current position of the portal from the roomCenter
-    //     var newPortalPosFromCenter = curPortalPosFromCenter.clone().multiplyScalar(roomSizeRatio); // the position of the portal in the other room
-    //     newPortalPosFromCenter = newPortalPosFromCenter.reflect(this.portalNormal); // reflect the portal position to be on the opposite side of the destination room
-
-    //     this.secondPortalPos = newPortalPosFromCenter.clone().add(destinationRoomCenter);
-    // }
-
-   
-    // run place portal function when the gun fires
-    
-    // _placePortal(){
-        
-    //     const raycaster = new THREE.Raycaster(); // intialize raycaster 
-    //     raycaster.setFromCamera({x:0,y:0}, this._camera); // 
-
-
-    //     // TODO: Do this in a more global intersection with scene
-    //     const hits = raycaster.intersectObjects(this.curRoom.surfaces) // check if raycaster intersect any of the surfaces
-
-    //     // if no hits detected return 
-    //     if(!hits.length){
-    //         return;
-    //     }
-
-    //     const position = hits[0].point.clone(); // set position to the closest hit
-    //     const eye = position.clone();
-    //     eye.add(hits[0].face.normal);
-
-    //     const rotation = new THREE.Matrix4();
-
-    //     var wDir = new THREE.Vector3();
-    //     this._camera.getWorldDirection(wDir)
-
-    //     var normal = hits[0].face.normal;
-
-    //     this.portalNormal = normal;
-
-    //     rotation.lookAt(eye, position, THREE.Object3D.DEFAULT_UP);
-
-    //     const euler = new THREE.Euler();
-    //     euler.setFromRotationMatrix(rotation);
-
-    //     if(this.portalTest){
-    //         this.portalTest._removePortal(); // clean up previous portal if it exists
-    //     }
-
-    //     this.portalTest = new Portal(this._camera); // create entry portal
-
-    //     var newPortal = new THREE.Mesh(this.portalTest.portalGeom, this.portalMaterial);
-    //     newPortal.recieveShadow = true;
-
-    //     newPortal.position.copy(hits[0].point) 
-                
-    //     const n = normal.clone();
-    //     n.transformDirection(hits[0].object.matrixWorld);
-    //     n.add(newPortal.position);
-
-    //     newPortal.up.copy(wDir.multiplyScalar((normal.clone().dot(THREE.Object3D.DEFAULT_UP))).add(THREE.Object3D.DEFAULT_UP)) /// redo this research how rto do projection
-    //     newPortal.lookAt(n);
-    //     const hit = hits[0]
-        
-    //     if(this.outPortal){
-    //         this.outPortal._removePortal();
-    //     }
-  
-    //     this.portalTest._placePortal(hit, newPortal);
-
-    //     this.outPortal = new Portal(this._camera); // create exit portal 
-    //     this._calculateExitPortalPosition(); // calculate position of exit portal
-    //     this.outPortal.position = this.secondPortalPos;   
-        
-    //     this.portalTest.linkPortal(this.outPortal.position);
-
-    // }
 
     _updateTranslation(delta){
         // handle inputs

@@ -8,13 +8,9 @@ import {HandTrackHelper} from "./handTrackHelper.js"
 import {FirstPersonCamera} from "./FirstPersonCamera.js"
 import {Room} from "./Room.js"
 
-  
-import * as OrbitControls from "https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/OrbitControls.js"
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
 import {Text} from 'https://cdn.jsdelivr.net/npm/troika-three-text@0.52.0/+esm';
 import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
-
-import { PointerLockControls } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/PointerLockControls.js';
 
 var camera, scene, renderer
 
@@ -22,8 +18,6 @@ export {renderer, scene};
 
 const clock = new THREE.Clock();
 const gestureTimeoutClock = new THREE.Clock();
-
-let mixer;
 
 // https://github.com/devinekask/creative-code-3-f24/blob/main/ml5/demos/03-handpose-vanilla-js.html
 
@@ -64,13 +58,8 @@ var categories = [
 ]
 var categoriesMap = new Map();
 var rect;
-var controls;
-var floorMesh;
-var wallMesh;
-var ceilingMesh;
 var themeLabel = new Text();
 var gestureLabel = new Text();
-var gunModel;
 var room;
 var room2;
 
@@ -80,10 +69,6 @@ var soundPlayer;
 
 var themeTracker;
 var inputTracker;
-
-
-var firingEvent;
-var renderTarget;
 
 function init() {
     // https://annakap.medium.com/integrating-ml5-js-posenet-model-with-three-js-b19710e2862b
@@ -100,8 +85,6 @@ function init() {
     const container = document.createElement( 'div' );
     document.body.appendChild( container );
     container.id = "snuggle"
-
-    //container.requestPointerLock();
 
     rect = document.getElementById("snuggle").getBoundingClientRect()
 
@@ -137,13 +120,19 @@ function init() {
     curRoom = room;
     portalRoom = room2;
     
+    scene.userData.portalableSurfaces = [];
+
     room.surfaces.forEach((surface)=>{
         scene.add(surface);
+        scene.userData.portalableSurfaces.push(surface);
+
     })
 
     room2.surfaces.forEach((surface)=>{
         scene.add(surface);
+        scene.userData.portalableSurfaces.push(surface);
     })
+
 
     scene.userData.curRoom = room;
     scene.userData.destinationRoom = room2;
@@ -160,7 +149,7 @@ function init() {
     canvas.id = "mainCanvas"
 
     canvas.onclick = ()=>{
-        canvas.requestPointerLock();
+        canvas.requestPointerLock(); // lock pointer to allow to look around
     }
 
     container.appendChild(canvas);
@@ -168,7 +157,6 @@ function init() {
     renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, canvas: canvas } );
     renderer.setClearColor( 0x000000, 0 );
     renderer.setPixelRatio( window.devicePixelRatio );
-    //renderer.setSize( 500, 500 );
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     container.appendChild( renderer.domElement );
@@ -176,50 +164,7 @@ function init() {
     // position player in center 
     camera.position.set(room._center.x, room._center.y, room._center.z);
 
-
     fpsCamera = new FirstPersonCamera(camera, room, portalRoom);
-    //
-    // var fLoader = new FBXLoader();
-    
-    // fLoader.load("gun.fbx", (object)=>
-    // {
-
-    //     object.position.set(0.1,-0.08,-0.3)
-
-    //     var scale = 0.0008;
-    //     object.scale.set(scale,scale,scale);
-  
-    //     scene.add(object)
-       
-    //     gunModel = object;
-
-    //     const video = document.getElementById( 'video' );
-    //     const texture = new THREE.VideoTexture( video )
-        
-  
-
-    //     console.log(gunModel.children);
-    //     gunModel.children[1].material.map = texture;
-
-    //     gunModel.children.forEach(child => {
-    //             child.renderOrder = -1
-         
-            
-    //         }
-    //     )
-
-    //     object.parent = fpsCamera._camera;
-
-    // });
-
-
-
-
-    // camera controlls
-
-    //controls = new FirstPersonControls( camera, renderer.domElement);
-	//controls.target.set( 0, 50, 0 );
-    //controls.enablePan = false;
 
     window.addEventListener( 'resize', onWindowResize, false );
 
@@ -233,14 +178,10 @@ function init() {
 
     // text labels
 
-            
     themeTracker.innerHTML = `Current Theme: ${themes[themeIndex]}!`;
-
-
     scene.add(themeLabel);
 
     updateGestureText("Gesture List: \n")
-
 
     var testMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 30, 30, 30 ), new THREE.MeshPhongMaterial( ) );
     testMesh.position.set(room._center.x, room._center.y, room._center.z);
@@ -249,10 +190,7 @@ function init() {
    
 
     testMesh.geometry.computeFaceNormals();
-    
     room.surfaces.push(testMesh);
-
-    renderTarget = new THREE.WebGLRenderTarget( 512, 512, { format: THREE.RGBFormat} );
 
     animate();
 
@@ -261,9 +199,9 @@ function init() {
 var fpsCamera;
 
 function updateGestureText(text){
-    gestureLabel.dispose();
-    scene.remove(gestureLabel);
-    gestureLabel = new Text();
+    // gestureLabel.dispose();
+    // scene.remove(gestureLabel);
+    // gestureLabel = new Text();
     
     gestureLabel.text = text;
     gestureLabel.fontSize = 8;
@@ -275,7 +213,7 @@ function updateGestureText(text){
 
     inputTracker.innerHTML = text;
 
-    scene.add(gestureLabel);
+    // scene.add(gestureLabel);
 }
 
 function actionsToText(listOfActions){
@@ -291,8 +229,6 @@ function actionsToText(listOfActions){
     text =`</ul> will teleport to: <br> <span style="color:red"> ${themes[teleportToIndex]} </span> <br>
     ` + text;
 
-
-
     updateGestureText(text);
 
 }
@@ -305,9 +241,7 @@ function onWindowResize() {
     renderer.setPixelRatio(window.devicePixelRatio)
     camera.updateProjectionMatrix();
 
-
     //renderer.setSize(camera.aspect*500, 500);
-
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
@@ -322,10 +256,8 @@ var curAnim = {
 }
 
 var prevAnim = {
-    
     name: "None",
     action: categoriesMap["None"]
-    
 }
 
 let mousePos = {
@@ -363,7 +295,6 @@ window.addEventListener("pointerdown",(e)=>{
 
 
 var actionList = [];
-var changingScene = false;
 var isGestureTimeOut = false;
 var gestureTimeOut = 1;
 
@@ -378,17 +309,12 @@ function animate() {
  
 
     const delta = clock.getDelta();
-    if ( mixer ) {
-        mixer.update( delta )
-    };
 
+    scene.userData.globalDelta = delta;
 
-    
     //controls.update()
     TWEEN.update();
    
-    
-    const nowInMs = Date.now();
 
     handHelper.getPose().then((action) => {
 
@@ -472,7 +398,7 @@ async function processIndex(actionList){
 
     themeTracker.innerHTML = curTheme;
 
-    fpsCamera.destinationRoom.updateTheme(themes[themeIndex])
+    scene.userData.destinationRoom.updateTheme(themes[themeIndex])
 
 
 
@@ -480,21 +406,4 @@ async function processIndex(actionList){
     scene.userData.changingScene = false;
 }
        
-// var firingAnim;
-
-
-// document.addEventListener("fire", ()=>{
-
-//     if(!firingAnim?.isPlaying()){
-//         firingAnim = new TWEEN.Tween(gunModel.rotation).to({x:1},200).yoyo(true)
-//         .repeat(1)
-//         .easing(TWEEN.Easing.Cubic.InOut)
-//         .start()
-//         gunModel.updateMatrix();
-//         changingScene = true;
-//     }
-// });
-
-
-
 

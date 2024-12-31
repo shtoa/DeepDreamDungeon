@@ -5,15 +5,19 @@ import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.m
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
 import {scene} from './Index.js'
 
+// FIX ME USE STATE MACHINE FOR ANIMATIONS
 
 export class GunController{
     
     constructor(camera){
         
         this.firingAnim;
+        this.ammoCount = 1;
 
         this._camera = camera;
         this.loadGunModel();
+
+        this.isSpinning = false;
 
         this._fireEvent = new Event("fire");
         document.addEventListener("fire", this._placePortal.bind(this)); // research about this
@@ -24,22 +28,30 @@ export class GunController{
 
         document.addEventListener("fire", ()=>{
 
-            if(!this.firingAnim?.isPlaying()){
-                this.firingAnim = new TWEEN.Tween(this.gunModel.rotation).to({x:1},200).yoyo(true)
-                .repeat(1)
-                .easing(TWEEN.Easing.Cubic.InOut)
-                .start()
-                this.gunModel.updateMatrix();
-                scene.userData.changingScene = true;
-            }
+            // if(!this.firingAnim?.isPlaying()){
+            //     this.firingAnim = new TWEEN.Tween(this.gunModel.rotation).to({x:1},200).yoyo(true)
+            //     .repeat(1)
+            //     .easing(TWEEN.Easing.Cubic.InOut)
+            //     .start()
+            //     this.gunModel.updateMatrix();
+            //     scene.userData.changingScene = true;
+            // }
+
+            this.mixer.stopAllAction();
+            this.animationsMap["shoot"].play();
+            scene.userData.changingScene = true;
+
+            this.isSpinning = false;
         });
+        this.animationsMap = new Object();
 
     }
 
     loadGunModel(){
         var fLoader = new FBXLoader();
+  
     
-        fLoader.load("gun.fbx", (object)=>
+        fLoader.load("handTest.fbx", (object)=>
         {
     
             object.position.set(0.1,-0.08,-0.3)
@@ -54,12 +66,108 @@ export class GunController{
             const video = document.getElementById( 'video' );
             const texture = new THREE.VideoTexture( video )
 
-            this.gunModel.children[1].material.map = texture;
-    
+            this.gunModel.getObjectByName("cameraOrb").material.map = texture;
+
+            console.log(object.animations);
+
+
+            this.mixer = new THREE.AnimationMixer( object );
+            this.animationsMap["flip"] = this.mixer.clipAction( object.animations[ 5 ] );
+            this.animationsMap["flip"].loop = THREE.LoopOnce;
+
+
+            this.animationsMap["startFlip"] = this.mixer.clipAction( object.animations[ 4 ] );
+            this.animationsMap["startFlip"].clampWhenFinished = true;
+            this.animationsMap["startFlip"].loop = THREE.LoopOnce;
+
+
+            this.animationsMap["stopFlip"] = this.mixer.clipAction( object.animations[ 2 ] );
+            this.animationsMap["stopFlip"].clampWhenFinished = true;
+            this.animationsMap["stopFlip"].loop = THREE.LoopOnce;
+            this.animationsMap["stopFlip"].setDuration(0.4);
+
+
+            this.animationsMap["shoot"] = this.mixer.clipAction( object.animations[ 3 ] );
+            this.animationsMap["shoot"].clampWhenFinished = true;
+            this.animationsMap["shoot"].loop = THREE.LoopOnce;
+        
+
+            this.animationsMap["reloadArms"] = this.mixer.clipAction( object.animations[ 0 ] );
+            this.animationsMap["reloadArms"].clampWhenFinished = true;
+            this.animationsMap["reloadArms"].loop = THREE.LoopOnce;
+
+            
+            this.animationsMap["reloadOrb"] = this.mixer.clipAction( object.animations[ 1 ] );
+            this.animationsMap["reloadOrb"].clampWhenFinished = true;
+            this.animationsMap["reloadOrb"].loop = THREE.LoopOnce;
+
+            this.isSpinning = false;
+            this.mixer.timeScale = 1.5; // set timescale to help with speed of animation
+            this.mixer.addEventListener("finished", (e) => {
+                console.log(e)
+                if(e.action._clip.name == "arm|spinStart"){
+                    
+                    if(!this.animationsMap["stopFlip"].isRunning()){
+                        this.animationsMap["startFlip"].fadeOut(0.1);
+                        this.animationsMap["flip"].reset().play();
+                        //this.animationsMap.loop = THREE.LoopRepeat;
+                        this.isSpinning = true;
+                    }
+
+                }
+
+
+                if(e.action._clip.name == "arm|spinStop"){
+                    this.animationsMap["stopFlip"].stop();
+                    //this.animationsMap["flip"].stop();
+
+                    this.isSpinning = false;
+                }
+
+                if(e.action._clip.name == "arm|shootPortal"){
+                    this.animationsMap["shoot"].stop();
+                    this.animationsMap["flip"].stop();
+                    this.isSpinning = false;
+                }
+
+                // FIX ME: MAKE SAME LENGTH ANIMATION
+
+                if(e.action._clip.name == "cameraOrb|reload" && !this.animationsMap["reloadArms"].isRunning()){
+                    this.animationsMap["reloadOrb"].stop();
+                    this.animationsMap["reloadArms"].stop();
+                    this.animationsMap["flip"].stop();
+                    this.ammoCount = 1;
+                   
+                }
+
+                if(e.action._clip.name == "arm|reload.001" && !this.animationsMap["reloadOrb"].isRunning()){
+                    this.animationsMap["reloadArms"].stop();
+                    this.animationsMap["reloadOrb"].stop();
+                    this.animationsMap["flip"].stop();
+                    this.ammoCount = 1;
+              
+                }
+
+                if(e.action._clip.name == "arm|shootPortal"){
+                    this.animationsMap["shoot"].stop();
+                    this.animationsMap["shoot"].reset();
+                    this.animationsMap["flip"].stop();
+                    
+                }
+
+                if(e.action._clip.name == "arm|spin"){
+              
+                    this.animationsMap["stopFlip"].play();
+                    this.isSpinning = false;
+                }
+
+
+            })
+
+            console.log(this.gunModel)
+
             this.gunModel.children.forEach(child => {
                     child.renderOrder = -1
-             
-                
                 }
             )
     
@@ -71,12 +179,86 @@ export class GunController{
     }
 
     update(){
-        if(this._cooldownTimer.getElapsedTime() >= this._cooldown){
+        if(this._cooldownTimer.getElapsedTime() >= this._cooldown && this.ammoCount != 0){
             this._checkFire();
         }
 
         if(this.portalTest){
             this.portalTest._updatePortal();
+        }
+
+  
+        this.mixer.update(scene.userData.globalDelta) // FIXME MAKE SURE MIXER IS INITIALIZED
+
+       
+
+        if(inputController._keys["82"] && this.ammoCount == 0 && !this.animationsMap["shoot"].isRunning() && !this.animationsMap["stopFlip"].isRunning()  && !this.animationsMap["reloadOrb"].isRunning() && !this.animationsMap["reloadArms"].isRunning()){
+            
+            this.animationsMap["startFlip"].stop(); 
+            this.animationsMap["flip"].loop = THREE.LoopOnce;
+            // check if spinning complete spin
+            
+            if(!this.animationsMap["flip"].isRunning()){
+                this._reload();
+            }
+        }
+
+   
+
+        else if(inputController._keys["70"] && !this.animationsMap["shoot"].isRunning() && !this.animationsMap["reloadOrb"].isRunning() && !this.animationsMap["reloadArms"].isRunning() && !this.animationsMap["stopFlip"].isRunning()){
+            this._spinGun();
+        } 
+        
+        else if (this.isSpinning && !this.animationsMap["stopFlip"].isRunning() && !this.animationsMap["startFlip"].isRunning()) {
+            
+            //this.animationsMap["startFlip"].stop(); 
+            this.animationsMap["flip"].loop = THREE.LoopOnce;
+            
+        } else if(!this.animationsMap["stopFlip"].isRunning() && !this.isSpinning){
+
+            if(this.animationsMap["startFlip"].isRunning()){
+                this.animationsMap["startFlip"].fadeOut(0.1)
+                this.animationsMap["stopFlip"].play();
+ 
+            }
+        } else {
+            //
+        }
+
+
+  
+          
+
+    }
+
+    _checkIsAnimationPlaying(){
+        for (const animationName in this.animationsMap) {
+            if(this.animationsMap[animationName].isRunning()){
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    _reload(){
+        this.animationsMap["reloadOrb"].play();;
+        this.animationsMap["reloadArms"].play();
+    }
+
+    _spinGun(){
+    
+   
+        if (this.isSpinning == false){
+            if(!this.animationsMap["startFlip"].isRunning()){
+                this.animationsMap["startFlip"].reset();
+                
+            }
+            console.log("startingSpin")
+            this.animationsMap["startFlip"].play();
+        } else {
+            this.animationsMap["flip"].loop = THREE.LoopRepeat;
         }
     }
 
@@ -88,6 +270,7 @@ export class GunController{
             this._cooldownTimer.stop();
 
             document.dispatchEvent(this._fireEvent)
+            this.ammoCount -= 1;
 
             this._cooldownTimer.start();
         }
@@ -95,23 +278,6 @@ export class GunController{
 
     _calculateExitPortalPosition(){
        
-        // TODO: Move this Section as Properties of Rooms
-        // currentRoom 
-
-        // var curRoomSize = new THREE.Vector3();
-        // this.curRoom.bounds.getSize(curRoomSize);
-
-        // var curRoomCenter = new THREE.Vector3();
-        // this.curRoom.bounds.getCenter(curRoomCenter);
-        
-        // Destination
-        // var destinationRoomSize = new THREE.Vector3();
-        // this.destinationRoom.bounds.getSize(destinationRoomSize);
-
-        // var destinationRoomCenter = new THREE.Vector3();
-        // this.destinationRoom.bounds.getCenter(destinationRoomCenter); // FIX ME: Move this to actual room class
-
-
         var destinationRoom = scene.userData.destinationRoom;
         var curRoom = scene.userData.curRoom;
         
@@ -131,12 +297,10 @@ export class GunController{
         const raycaster = new THREE.Raycaster(); // intialize raycaster 
         raycaster.setFromCamera({x:0,y:0}, this._camera); // 
 
-
         // TODO: Do this in a more global intersection with scene
 
-
         // make it only with objects in room
-        const hits = raycaster.intersectObjects(scene.children) // check if raycaster intersect any of the surfaces
+        const hits = raycaster.intersectObjects(scene.userData.portalableSurfaces) // check if raycaster intersect any of the surfaces
 
         // if no hits detected return 
         if(!hits.length){
@@ -155,8 +319,6 @@ export class GunController{
         var normal = hits[0].face.normal;
 
         this.portalNormal = normal;
-
-
 
         rotation.lookAt(eye, position, THREE.Object3D.DEFAULT_UP);
 
@@ -189,7 +351,6 @@ export class GunController{
         }
   
         this.portalTest._placePortal(hit, newPortal);
-        //scene.userData.inPortalBounds = this.portalTest._portal.userData.bounds;
 
         this.outPortal = new Portal(this._camera); // create exit portal
         
