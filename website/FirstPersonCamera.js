@@ -34,9 +34,20 @@ export class FirstPersonCamera{
         this._jumpHeight = 0.5;
         this._isGrounded = true; 
 
+        this._lateralAcceleration = 500;
+        this._drag = 250;
+        this._maxLateralVelocity = 120;
+        this._lateralVelocity = new THREE.Vector2(0, 0);
+
+
+        this._maxSprintVelocity = 180;
+        this._sprintAcceleration = 600;
+        this.isSprinting = false;
+
         //#endregion
 
-        this.GunController = new GunController(camera);
+        this.GunController = new GunController(camera, this);
+
     }
 
     update(delta){
@@ -64,18 +75,51 @@ export class FirstPersonCamera{
     _updateCamera(_){
         this._camera.quaternion.copy(this._rotation);
         this._camera.position.copy(this._translation);
+        this._updateCameraFov();
         this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
+    }
+
+    _updateCameraFov(){
+
+        // FIX ME: Do THis Propperlly 
+
+        // if(this.isSprinting){
+        //     if(this._lateralVelocity.length()>this._maxLateralVelocity){
+        //         this._camera.setFocalLength(this._camera.getFocalLength()-2*(this._lateralVelocity.length())/(170));
+        //     }
+        // }
+
     }
 
     _updateTranslation(delta){
         // handle inputs
+
+        if(this._input._keys["16"]){
+            this.isSprinting = true;
+        } else {
+            this.isSprinting = false;
+        }
+
+
         if(this._input._keys["32"] && this._isGrounded){
             this._verticalVelocity += Math.sqrt(this._jumpHeight * 2 * this._gravity);
             this._isGrounded = false;
         }
 
-        const forwardV = ((this._input._keys["87"] ? 1 : 0) + (this._input._keys["83"] ? -1 : 0))*120;
-        const strafeV = ((this._input._keys["65"] ? 1 : 0) + (this._input._keys["68"] ? -1 : 0))*120;
+        const forwardV = ((this._input._keys["87"] ? 1 : 0) + (this._input._keys["83"] ? -1 : 0));
+        const strafeV = ((this._input._keys["65"] ? 1 : 0) + (this._input._keys["68"] ? -1 : 0));
+
+        var movementDir = new THREE.Vector2(forwardV, strafeV).normalize();
+        var velocityDelta = movementDir.clone().multiplyScalar(
+            this.isSprinting ? this._sprintAcceleration*delta : this._lateralAcceleration*delta
+        );
+        this._lateralVelocity = this._lateralVelocity.clone().add(velocityDelta);
+
+        var curDrag = this._lateralVelocity.clone().normalize().clone().multiplyScalar(this._drag*delta);
+        this._lateralVelocity = (this._lateralVelocity.length() > this._drag*delta) ? this._lateralVelocity.clone().sub(curDrag) : new THREE.Vector2(0,0);
+
+
+        this._lateralVelocity.clampLength(0, this.isSprinting ? this._maxSprintVelocity : this._maxLateralVelocity);
 
         // handle walking
         const qx = new THREE.Quaternion();
@@ -84,12 +128,12 @@ export class FirstPersonCamera{
         // add forward walking (forward-backward)
         const forward = new THREE.Vector3(0,0,-1);
         forward.applyQuaternion(qx);
-        forward.multiplyScalar(forwardV*delta);
+        forward.multiplyScalar(this._lateralVelocity.x*delta);
 
         // add strafe (left-right)
         const left = new THREE.Vector3(-1,0,0);
         left.applyQuaternion(qx);
-        left.multiplyScalar(strafeV*delta);
+        left.multiplyScalar(this._lateralVelocity.y*delta);
 
         // add jump
         const up = new THREE.Vector3(0,1,0);
@@ -145,7 +189,7 @@ export class FirstPersonCamera{
             //this._scene.add( this.box );
             //#endregion 
 
-            if (portalBounds.containsPoint(translationNextFrame)){
+            if (portalBounds.containsPoint(translationNextFrame) && this.GunController.portalTest.isOpen){
 
                 // check if collides with room
                 var newRBounds = scene.userData.destinationRoom.bounds.clone(); // check if the translation is within the new room bounds
@@ -185,7 +229,7 @@ export class FirstPersonCamera{
 
         // convert to spherical coordinates
         this._phi += -xh*5;
-        this._theta = THREE.MathUtils.clamp(this._theta + -yh*5, -Math.PI / 2, Math.PI / 2);
+        this._theta = THREE.MathUtils.clamp(this._theta + -yh*5, -Math.PI / 2.1, Math.PI / 2.1);
    
         // rotation around x
         const qx = new THREE.Quaternion();  

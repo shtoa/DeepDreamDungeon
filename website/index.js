@@ -11,6 +11,7 @@ import {Room} from "./Room.js"
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
 import {Text} from 'https://cdn.jsdelivr.net/npm/troika-three-text@0.52.0/+esm';
 import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
+import { FaceTrackHelper } from './faceTrackHelper.js';
 
 var camera, scene, renderer
 
@@ -25,6 +26,8 @@ var themes = [];
 var themeIndex = 0;
 
 var handHelper;
+var faceHelper;
+
 var portalRoom;
 
 const preload = async() =>{
@@ -32,6 +35,10 @@ const preload = async() =>{
     handHelper = new HandTrackHelper();
     await handHelper.initVideo();
     await handHelper.createGestureRecognizer();
+
+
+    faceHelper = new FaceTrackHelper();
+    await faceHelper.createFaceLandmarker();
 
     await fetch("/themes/themes.txt").then(res=> res.text()) // TODO: Move to backend
     .then(text=>{
@@ -70,8 +77,14 @@ var soundPlayer;
 var themeTracker;
 var inputTracker;
 
+
+
+
+
 function init() {
     // https://annakap.medium.com/integrating-ml5-js-posenet-model-with-three-js-b19710e2862b
+
+
     
 
     scene = new THREE.Scene();
@@ -88,7 +101,7 @@ function init() {
 
     rect = document.getElementById("snuggle").getBoundingClientRect()
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 500 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.15, 500 );
    // camera.position.set( 0, 10, 0 );
 
     const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
@@ -183,14 +196,14 @@ function init() {
 
     updateGestureText("Gesture List: \n")
 
-    var testMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 30, 30, 30 ), new THREE.MeshPhongMaterial( ) );
-    testMesh.position.set(room._center.x, room._center.y, room._center.z);
-    testMesh.geometry.rotateX(Math.PI/4);
-    scene.add(testMesh);
+    // var testMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 30, 30, 30 ), new THREE.MeshPhongMaterial( ) );
+    // testMesh.position.set(room._center.x, room._center.y, room._center.z);
+    // testMesh.geometry.rotateX(Math.PI/4);
+    // scene.add(testMesh);
    
 
-    testMesh.geometry.computeFaceNormals();
-    room.surfaces.push(testMesh);
+    // testMesh.geometry.computeFaceNormals();
+    // room.surfaces.push(testMesh);
 
     animate();
 
@@ -223,7 +236,7 @@ function actionsToText(listOfActions){
 
     listOfActions.forEach((action)=>{
         text += `<li> ${action} </li>`
-        teleportToIndex += gestureToBinary[action];
+        teleportToIndex += faceToBinary[action]; // gestureToBinary
     });
 
     text =`</ul> will teleport to: <br> <span style="color:red"> ${themes[teleportToIndex]} </span> <br>
@@ -299,24 +312,24 @@ var isGestureTimeOut = false;
 var gestureTimeOut = 1;
 
 
-var unMappedActionsList = ["None", "Open_Palm", "Closed_Fist", "Pointing_Up", "Pointing_Down"]
+// var unMappedActionsList = ["None", "Open_Palm", "Closed_Fist", "Pointing_Up", "Pointing_Down"]
+
+var unMappedActionsList = ["Open", "None"]
 
 function animate() {
 
     requestAnimationFrame( animate );
 
-   
- 
-
     const delta = clock.getDelta();
 
     scene.userData.globalDelta = delta;
+    scene.userData.globalTime = clock.getElapsedTime();
 
     //controls.update()
     TWEEN.update();
    
-
-    handHelper.getPose().then((action) => {
+    // handHelper.getPose()
+    faceHelper.getFaceLandmarks().then(() => {
 
         if(gestureTimeoutClock.getElapsedTime() > gestureTimeOut){
         
@@ -329,9 +342,10 @@ function animate() {
 
             //var action = handHelper.getPose()
 
-            handHelper.getPose().then((action)=>{
+            faceHelper.getFaceLandmarks().then((action)=>{
             
-            if(action != "No_Hands"){
+            // No_Hands
+            if(action != "No_Face"){
 
                 if(actionList.length == 0 && !unMappedActionsList.includes(action)){
                     actionList.push(action);
@@ -340,10 +354,11 @@ function animate() {
                     actionsToText(actionList);
                 } 
                 
-                if(action == "Open_Palm"){
-                    processIndex(actionList);
-                    updateGestureText(`Teleported to: \n ${themes[themeIndex]}`);
-                }
+                // when to process 
+                // if(action == "Open_Palm"){
+                //     processIndex(actionList);
+                //     updateGestureText(`Teleported to: \n ${themes[themeIndex]}`);
+                // }
                 
                 if (!actionList.includes(action) && !unMappedActionsList.includes(action)){
                     actionList.push(action);
@@ -354,15 +369,20 @@ function animate() {
 
             }
 
+      
+
             })
             
         }
+
     })
 
     fpsCamera.update(delta);
     renderer.render( scene, camera );
 
 }
+
+document.addEventListener("fire",()=>{processIndex(actionList);});
 
 // add confirm
 
@@ -374,13 +394,20 @@ var gestureToBinary = {
 }
 
 
+var faceToBinary = {
+    "Kiss": 1,
+    "Smile": 2,
+    "Frown": 4,
+    "Pressed": 8,
+}
+
 async function processIndex(actionList){
 
     var totalIndex = 0;
 
     actionList.forEach((action)=>{
     
-        totalIndex += gestureToBinary[action];
+        totalIndex += faceToBinary[action] //gestureToBinary[action];
     })
 
     if(totalIndex > themes.length){
@@ -390,8 +417,7 @@ async function processIndex(actionList){
 
     themeIndex = totalIndex;
 
-    // add listner to update
-    soundPlayer.load(`themes/${themes[themeIndex]}/sounds/${themes[themeIndex]}.wav`);
+
     var curTheme = `Current Theme: ${themes[themeIndex]}!`;
 
    
@@ -399,6 +425,10 @@ async function processIndex(actionList){
     themeTracker.innerHTML = curTheme;
 
     scene.userData.destinationRoom.updateTheme(themes[themeIndex])
+
+
+    // add listner to update
+    // soundPlayer.load(`themes/${themes[themeIndex]}/sounds/${themes[themeIndex]}.wav`);
 
 
 
