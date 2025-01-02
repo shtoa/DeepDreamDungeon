@@ -5,7 +5,7 @@ body{
 }
 
 #currentTheme{
-    top: 10px;
+    top: 90px;
     position: absolute;
     margin: 0 auto;
     padding: 0 auto;
@@ -21,7 +21,7 @@ body{
 
 
 #handInputs{
-    top: 5%;
+    top: 20%;
     left:5%;
     position: absolute;
     margin: 0 auto;

@@ -165,7 +165,7 @@ export class FaceTrackHelper {
         var closestExpression = [...this.expressionsToRecognize.entries()].reduce((left,right) => left[1].avgValue > right[1].avgValue ? left : right);
         
         // tweak and play around with this value
-        if(closestExpression[1].avgValue < 0.3){
+        if(closestExpression[1].avgValue < 0.5){
             return "None";
         } else {
             return closestExpression[0];

@@ -3,19 +3,29 @@
 
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
+//import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
+
 
 import {HandTrackHelper} from "./handTrackHelper.js" 
 import {FirstPersonCamera} from "./FirstPersonCamera.js"
 import {Room} from "./Room.js"
 
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
+
+
+
 import {Text} from 'https://cdn.jsdelivr.net/npm/troika-three-text@0.52.0/+esm';
 import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
 import { FaceTrackHelper } from './faceTrackHelper.js';
 
 var camera, scene, renderer
 
-export {renderer, scene};
+var postCamera;
+var postRenderTexture;
+var postScene;
+var postRenderMesh;
+
+export {renderer, scene, actionList};
 
 const clock = new THREE.Clock();
 const gestureTimeoutClock = new THREE.Clock();
@@ -29,6 +39,9 @@ var handHelper;
 var faceHelper;
 
 var portalRoom;
+var borderSize = 40;
+
+var borderCornerList = [];
 
 const preload = async() =>{
 
@@ -45,7 +58,57 @@ const preload = async() =>{
         themes = text.split(/\r\n|\n/);
     });
 
+
+    var fLoader2 = await new FBXLoader();
+    await fLoader2.load("borderCorner.fbx", (object)=>
+            {
+                // var topLeftCorner = new THREE.Object3D().copy(object);
+                // topLeftCorner.scale.set(2,2,2);
+                // topLeftCorner.position.set(-window.innerWidth/2+13-borderSize,window.innerHeight/2-13+borderSize,-1300);
+                // borderCornerList.push(topLeftCorner);
+
+                // var bottomLeftCorner = new THREE.Object3D().copy(object);
+                // bottomLeftCorner.scale.set(2,2,2);
+                // bottomLeftCorner.position.set(-window.innerWidth/2+13-borderSize,-window.innerHeight/2+13-borderSize,-1300);
+                // bottomLeftCorner.rotateZ(Math.PI/2);
+                // borderCornerList.push(bottomLeftCorner);
+
+                // var bottomRightCorner = new THREE.Object3D().copy(object);
+                // bottomRightCorner.scale.set(2,2,2);
+                // bottomRightCorner.position.set(window.innerWidth/2-13+borderSize,-window.innerHeight/2+13-borderSize,-1300);
+                // bottomRightCorner.rotateZ(Math.PI);
+                // borderCornerList.push(bottomRightCorner);
+
+                // var topRightCorner = new THREE.Object3D().copy(object);
+                // topRightCorner.scale.set(2,2,2);
+                // topRightCorner.position.set(window.innerWidth/2-13+borderSize,window.innerHeight/2-13+borderSize,-1300);
+                // topRightCorner.rotateZ(3*Math.PI/2);
+                // borderCornerList.push(topRightCorner);
+
+
+                for(var i = 0; i < 4; i++){
+                  
+                    var corner = new THREE.Object3D().copy(object);
+                    corner.scale.set(2,2,2);
+                    corner.position.set(
+                        (i > 1 ? -1 : 1)*(-window.innerWidth/2+13-borderSize),
+                        ((i == 1 || i ==  2)  ? -1 : 1)*(window.innerHeight/2-13+borderSize),-1300
+                    );
+                    corner.rotateZ(i*Math.PI/2);
+                    borderCornerList.push(corner);
+                }
+
+                
+                borderCornerList.forEach((corner)=>{
+                    postScene.add(corner);
+                })
+            })
+
+
     await setup();
+
+
+    
    
 }
 
@@ -77,6 +140,7 @@ var soundPlayer;
 var themeTracker;
 var inputTracker;
 
+var testMesh 
 
 
 
@@ -84,10 +148,9 @@ var inputTracker;
 function init() {
     // https://annakap.medium.com/integrating-ml5-js-posenet-model-with-three-js-b19710e2862b
 
-
-    
-
+   
     scene = new THREE.Scene();
+    postScene = new THREE.Scene();
     scene.userData.portalMask = new THREE.TextureLoader().load("./portalMask.png");
     scene.userData.changingScene = false;
 
@@ -95,14 +158,41 @@ function init() {
     inputTracker = document.getElementById("handInputs");
     
 
+    
+
+
     const container = document.createElement( 'div' );
     document.body.appendChild( container );
     container.id = "snuggle"
 
     rect = document.getElementById("snuggle").getBoundingClientRect()
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.15, 500 );
-   // camera.position.set( 0, 10, 0 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.05, 500 );
+
+ 
+    postCamera = new THREE.OrthographicCamera( -window.innerWidth/2-borderSize, window.innerWidth/2+borderSize, window.innerHeight/2+borderSize, -window.innerHeight/2-borderSize, 1, 3000 );
+    postRenderTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight);
+
+    postRenderMesh = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth,window.innerHeight), new THREE.MeshPhongMaterial( ));
+    postRenderMesh.position.set(0,0,-1500)
+
+ 
+
+    postScene.add(postRenderMesh);
+
+
+    const light = new THREE.AmbientLight(0xffffff,0.5); // soft white light
+    postScene.add( light )
+
+    // testMesh = new THREE.Mesh( new THREE.BoxGeometry( 5, 5, 5 ), new THREE.MeshPhongMaterial( ) );
+    // testMesh.geometry.rotateX(Math.PI/4);
+    // testMesh.position.set(0,0,10);
+    
+
+
+
+    postCamera.lookAt(postRenderMesh.position);
+
 
     const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
     hemiLight.position.set( 0, 600, 0 );
@@ -116,6 +206,40 @@ function init() {
     dirLight.shadow.camera.left = - 120;
     dirLight.shadow.camera.right = 120;
     scene.add( dirLight );
+
+    const dirLight2 = new THREE.DirectionalLight( 0xffffff );
+    dirLight2.position.set( 0, 200, 100 );
+    dirLight2.castShadow = true;
+    dirLight2.shadow.camera.top = 180;
+    dirLight2.shadow.camera.bottom = - 100;
+    dirLight2.shadow.camera.left = - 120;
+    dirLight2.shadow.camera.right = 120;
+
+    postScene.add(dirLight2);
+
+    // add border meshes 
+
+    var borderBottom = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth+2*borderSize,4*borderSize), new THREE.MeshPhongMaterial({transparent: true}));
+    borderBottom.position.set(0,-window.innerHeight/2+borderSize/2,-1500)
+
+    var teethTexture = new THREE.TextureLoader().load("teeth.png");
+    teethTexture.wrapS = THREE.RepeatWrapping;
+    teethTexture.wrapT = THREE.ClampToEdgeWrapping;
+
+    teethTexture.repeat.set(1,1);
+
+
+ //   borderBottom.material.map = teethTexture
+
+    var borderTop = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth+2*borderSize,3*borderSize), new THREE.MeshPhongMaterial({transparent: true}));
+    borderTop.position.set(0,window.innerHeight/2-borderSize/2,-1500)
+    borderTop.rotateZ(Math.PI);
+   // borderTop.material.map = teethTexture;
+
+
+  //  postScene.add(borderBottom);
+   // postScene.add(borderTop);
+
 
     // scene.add( new THREE.CameraHelper( dirLight.shadow.camera ) );
 
@@ -150,13 +274,10 @@ function init() {
     scene.userData.curRoom = room;
     scene.userData.destinationRoom = room2;
 
-    const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
-    grid.material.opacity = 0.2;
-    grid.material.transparent = true;
-    scene.add( grid );
-
-    // model
-    const loader = new FBXLoader();
+    // const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
+    // grid.material.opacity = 0.2;
+    // grid.material.transparent = true;
+    // scene.add( grid );
 
     var canvas = document.createElement('canvas');
     canvas.id = "mainCanvas"
@@ -212,10 +333,7 @@ function init() {
 var fpsCamera;
 
 function updateGestureText(text){
-    // gestureLabel.dispose();
-    // scene.remove(gestureLabel);
-    // gestureLabel = new Text();
-    
+
     gestureLabel.text = text;
     gestureLabel.fontSize = 8;
     gestureLabel.outlineWidth = "10%";
@@ -226,23 +344,24 @@ function updateGestureText(text){
 
     inputTracker.innerHTML = text;
 
-    // scene.add(gestureLabel);
 }
+
+var teleportToIndex;
 
 function actionsToText(listOfActions){
     updateGestureText("")
     var text = "Gesture List: <br><ul>";
-    var teleportToIndex = 0;
+    teleportToIndex = 0;
 
     listOfActions.forEach((action)=>{
         text += `<li> ${action} </li>`
         teleportToIndex += faceToBinary[action]; // gestureToBinary
     });
 
-    text =`</ul> will teleport to: <br> <span style="color:red"> ${themes[teleportToIndex]} </span> <br>
-    ` + text;
-
     updateGestureText(text);
+
+
+    //scene.userData.destinationTheme = themes[teleportToIndex];
 
 }
 
@@ -252,8 +371,35 @@ function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
     renderer.setPixelRatio(window.devicePixelRatio)
+
+
+    postRenderTexture.setSize(window.innerWidth,window.innerHeight);
+
     camera.updateProjectionMatrix();
 
+    // Fix ME: just update the geometry
+    postRenderMesh.geometry = new THREE.PlaneGeometry(window.innerWidth, window.innerHeight);
+
+    postCamera.left = -window.innerWidth/2-borderSize;
+    postCamera.right = window.innerWidth/2+borderSize;
+    postCamera.top = window.innerHeight/2+borderSize;
+    postCamera.bottom = -window.innerHeight/2-borderSize;
+
+    postCamera.updateProjectionMatrix()
+
+    // update corner positions
+    for(var i = 0; i < 4; i++){
+        var corner = borderCornerList[i];
+        corner.scale.set(2,2,2);
+        corner.position.set(
+            (i > 1 ? -1 : 1)*(-window.innerWidth/2+13-borderSize),
+            ((i == 1 || i ==  2)  ? -1 : 1)*(window.innerHeight/2-13+borderSize),-1300
+        );
+
+
+    }
+                  
+     
     //renderer.setSize(camera.aspect*500, 500);
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
@@ -340,6 +486,8 @@ function animate() {
         if (scene.userData.changingScene && !isGestureTimeOut){
         
 
+      
+
             //var action = handHelper.getPose()
 
             faceHelper.getFaceLandmarks().then((action)=>{
@@ -365,9 +513,26 @@ function animate() {
                     isGestureTimeOut = true;
                     gestureTimeoutClock.start();
                     actionsToText(actionList);
-                }
+                } 
+
+                
+
+
+              
 
             }
+
+            // FIX ME: MOVE THIS TO SEPARATE FUNCTION
+
+            var totalIndex = 0;
+            if (actionList.length > 0){
+            actionList.forEach((action)=>{
+
+                totalIndex += faceToBinary[action] //gestureToBinary[action];
+            })
+            }   
+            scene.userData.destinationTheme = themes[totalIndex];
+
 
       
 
@@ -378,7 +543,19 @@ function animate() {
     })
 
     fpsCamera.update(delta);
+
+
+     // render the scene from the portal camera to the render texture
+    renderer.setRenderTarget(postRenderTexture); // set the renderTarget of the renderer to the portal render Target
     renderer.render( scene, camera );
+
+    renderer.setRenderTarget(null); 
+
+    // do post processing pass
+    postRenderMesh.material.map = postRenderTexture;
+    postRenderMesh.material.map.needsUpdate = true;
+
+    renderer.render(postScene, postCamera)
 
 }
 
@@ -427,13 +604,16 @@ async function processIndex(actionList){
     scene.userData.destinationRoom.updateTheme(themes[themeIndex])
 
 
+
     // add listner to update
     // soundPlayer.load(`themes/${themes[themeIndex]}/sounds/${themes[themeIndex]}.wav`);
 
 
 
     actionList.length = 0;
+
     scene.userData.changingScene = false;
+    teleportToIndex=0;
 }
        
 

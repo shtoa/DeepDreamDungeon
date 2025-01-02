@@ -114,7 +114,7 @@ export class Portal{
                 
                 // Pervent Z fighting
                 polygonOffset: true,
-                polygonOffsetFactor: -20,
+                polygonOffsetFactor: -200,
 
                 uniformsNeedUpdate: true  
             

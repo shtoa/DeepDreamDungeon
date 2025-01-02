@@ -176,6 +176,7 @@ export class FirstPersonCamera{
         
 
         // fixme convert to use scene variables
+        // fixme to not constantly run
         if(scene.userData.inPortal){
             
             var portalBounds = scene.userData.inPortal._portal.userData.bounds.clone();
