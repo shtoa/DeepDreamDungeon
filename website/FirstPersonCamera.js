@@ -68,6 +68,7 @@ export class FirstPersonCamera{
                  
             this.GunController.update();
             this._input.update(delta);
+         
         
         }
     }

@@ -142,7 +142,7 @@ var inputTracker;
 
 var testMesh 
 
-
+var curThemeMesh;
 
 
 function init() {
@@ -154,11 +154,16 @@ function init() {
     scene.userData.portalMask = new THREE.TextureLoader().load("./portalMask.png");
     scene.userData.changingScene = false;
 
-    themeTracker = document.getElementById("currentTheme");
     inputTracker = document.getElementById("handInputs");
     
 
-    
+    curThemeMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry( 1000, 100),
+        new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, transparent: true })
+    );
+
+    curThemeMesh.position.set(0,window.innerHeight/2 - 100,-1500);
+    postScene.add(curThemeMesh);
 
 
     const container = document.createElement( 'div' );
@@ -312,8 +317,7 @@ function init() {
 
     // text labels
 
-    themeTracker.innerHTML = `Current Theme: ${themes[themeIndex]}!`;
-    scene.add(themeLabel);
+
 
     updateGestureText("Gesture List: \n")
 
@@ -326,7 +330,59 @@ function init() {
     // testMesh.geometry.computeFaceNormals();
     // room.surfaces.push(testMesh);
 
+    createCurThemeTexture();
+
     animate();
+
+}
+
+var curThemeCanvas, curThemeTexture
+
+function createCurThemeTexture(){
+      //#region destination text canvas
+      curThemeCanvas = document.createElement("canvas")
+      curThemeCanvas.id = "canvasDestination"
+      const context = curThemeCanvas.getContext("2d")
+      
+      curThemeCanvas.width = 1000;
+      curThemeCanvas.height = 100;
+  
+      context.font = "70px Comic Sans MS";
+
+      curThemeTexture = new THREE.CanvasTexture(curThemeCanvas);
+
+      updateCurThemeTexture()
+}
+
+function updateCurThemeTexture(){
+    
+    var curThemeText = scene.userData.curRoom._curTheme;    
+
+    var ctx = curThemeCanvas.getContext("2d");
+    ctx.clearRect(0,0,curThemeCanvas.width,curThemeCanvas.height);
+    ctx.font = "40px Comic Sans MS";
+    ctx.lineWidth = 2; 
+    var textWidth = ctx.measureText(curThemeText).width;
+
+    // scale text if its too long
+    if(textWidth > curThemeCanvas.width){
+
+
+        ctx.font = `${ (curThemeCanvas.width / textWidth)* 70}px Comic Sans MS`;
+        ctx.lineWidth = (curThemeCanvas.width / textWidth)*3; 
+        textWidth = ctx.measureText(curThemeText).width;
+
+    } 
+
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'black'
+   
+    ctx.fillText(curThemeText, (curThemeCanvas.width/2) - (textWidth/2), (curThemeCanvas.height/2)+25);
+    ctx.strokeText(curThemeText, (curThemeCanvas.width/2) - (textWidth/2), (curThemeCanvas.height/2)+25);
+   
+
+    curThemeMesh.material.map = curThemeTexture;
+    curThemeMesh.material.map.needsUpdate = true;
 
 }
 
@@ -342,7 +398,7 @@ function updateGestureText(text){
     gestureLabel.anchorX = "left";
     gestureLabel.sync();
 
-    inputTracker.innerHTML = text;
+    // inputTracker.innerHTML = text;
 
 }
 
@@ -466,12 +522,14 @@ function animate() {
 
     requestAnimationFrame( animate );
 
+
     const delta = clock.getDelta();
 
     scene.userData.globalDelta = delta;
     scene.userData.globalTime = clock.getElapsedTime();
 
     //controls.update()
+
     TWEEN.update();
    
     // handHelper.getPose()
@@ -557,6 +615,7 @@ function animate() {
 
     renderer.render(postScene, postCamera)
 
+    updateCurThemeTexture();
 }
 
 document.addEventListener("fire",()=>{processIndex(actionList);});
@@ -595,11 +654,13 @@ async function processIndex(actionList){
     themeIndex = totalIndex;
 
 
-    var curTheme = `Current Theme: ${themes[themeIndex]}!`;
+    //var curTheme = `Current Theme: ${themes[themeIndex]}!`;
 
    
 
-    themeTracker.innerHTML = curTheme;
+    //themeTracker.innerHTML = curTheme;
+
+   
 
     scene.userData.destinationRoom.updateTheme(themes[themeIndex])
 

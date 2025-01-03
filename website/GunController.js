@@ -271,7 +271,13 @@ export class GunController{
                 this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2)))
                 this.wordRing.lookAt(this._camera.position);
                 this.wordRing.scale.set(0.0002,0.0002,0.0002);
-                this.wordRing.material = new THREE.Material();
+                this.wordRing.material = new THREE.MeshPhongMaterial( {transparent: true});
+                
+                
+                
+                this.wordRing.getObjectByName("Circle").material.transparent = true;
+                this.wordRing.getObjectByName("Circle").material.map = this.destTexture;
+                this.wordRing.getObjectByName("Circle").material.map.needsUpdate = true;
 
                 scene.add(object);
             })
@@ -286,10 +292,10 @@ export class GunController{
 
   
     
-        fLoader.load("handTest2.fbx", (object)=>
+        fLoader.load("handTest3.fbx", (object)=>
         {
     
-            object.position.set(0.03,-0.02,-0.09)
+            object.position.set(0.02,-0.02,-0.09)
             
          
 
@@ -308,11 +314,11 @@ export class GunController{
 
 
             this.mixer = new THREE.AnimationMixer( object );
-            this.animationsMap["flip"] = this.mixer.clipAction( object.animations[ 6 ] );
+            this.animationsMap["flip"] = this.mixer.clipAction( object.animations[ 7 ] );
             this.animationsMap["flip"].loop = THREE.LoopOnce;
 
 
-            this.animationsMap["startFlip"] = this.mixer.clipAction( object.animations[ 1 ] );
+            this.animationsMap["startFlip"] = this.mixer.clipAction( object.animations[ 0 ] );
             this.animationsMap["startFlip"].clampWhenFinished = true;
             this.animationsMap["startFlip"].loop = THREE.LoopOnce;
 
@@ -323,28 +329,28 @@ export class GunController{
             this.animationsMap["stopFlip"].setDuration(0.4);
 
 
-            this.animationsMap["shoot"] = this.mixer.clipAction( object.animations[ 3 ] );
+            this.animationsMap["shoot"] = this.mixer.clipAction( object.animations[ 8 ] );
             this.animationsMap["shoot"].clampWhenFinished = true;
             this.animationsMap["shoot"].loop = THREE.LoopOnce;
         
 
-            this.animationsMap["reloadArms"] = this.mixer.clipAction( object.animations[ 0 ] );
+            this.animationsMap["reloadArms"] = this.mixer.clipAction( object.animations[ 2 ] );
             this.animationsMap["reloadArms"].clampWhenFinished = true;
             this.animationsMap["reloadArms"].loop = THREE.LoopOnce;
             this.animationsMap["reloadArms"].setDuration(1.3);
 
             
-            this.animationsMap["reloadOrb"] = this.mixer.clipAction( object.animations[ 2 ] );
+            this.animationsMap["reloadOrb"] = this.mixer.clipAction( object.animations[ 4 ] );
             this.animationsMap["reloadOrb"].clampWhenFinished = true;
             this.animationsMap["reloadOrb"].loop = THREE.LoopOnce;
             this.animationsMap["reloadOrb"].setDuration(1.3);
 
-            this.animationsMap["charge"] = this.mixer.clipAction( object.animations[ 8 ] );
+            this.animationsMap["charge"] = this.mixer.clipAction( object.animations[ 3 ] );
             this.animationsMap["charge"].clampWhenFinished = true;
             this.animationsMap["charge"].loop = THREE.LoopOnce;
             this.animationsMap["charge"].setDuration(0.7);
 
-            this.animationsMap["noAmmo"] = this.mixer.clipAction( object.animations[ 4 ] );
+            this.animationsMap["noAmmo"] = this.mixer.clipAction( object.animations[ 1 ] );
             this.animationsMap["noAmmo"].clampWhenFinished = true;
             this.animationsMap["noAmmo"].loop = THREE.LoopOnce;
             this.animationsMap["noAmmo"].setDuration(1.5);
@@ -467,10 +473,152 @@ export class GunController{
             this.gunModel.frustumCulled = false;
     
             object.parent = this._camera;
+
+            this._camera.add(object); // check this line
+
+
+
+
+            
+
+            //#region familiar
+            this.familiarMesh = new THREE.Mesh(new THREE.SphereGeometry(0.007, 32, 16 ), new THREE.MeshPhongMaterial());
+            this.familiarMesh.material.map = this.noAmmoTexture;
+
+
+            this.familiarMesh.userData.relativePos = new THREE.Vector3(0,0,0);
+            this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
+            
+        
+            scene.add(this.familiarMesh);
+            //this.familiarMesh.position.copy(this.gunModel.getObjectByName("Familiar").position)
+
+            this.familiarMesh.userData.positions = {
+                cur: new THREE.Vector3(),
+                target: new THREE.Vector3()
+            }
+           
+            this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.cur);
+            this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.target);
+
+            //this.gunModel.getObjectByName("Familiar").add(this.familiarMesh)
+
+            //this.familiarMesh.position.copy(this.gunModel.position.clone().add(this.gunModel.getObjectByName("Familiar").position))
+
+            this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.position);
+
+            this.familiarMesh.updateMatrix();
+            this.familiarMesh.updateWorldMatrix(true,true);
+            this.familiarMesh.updateMatrixWorld(true);
+
+            console.log(this.familiarMesh.position);
+            console.log(this.gunModel.getObjectByName("Familiar").position);
+
+
+            //#endregion
+
     
         });
     
     
+    }
+
+    SuperSmoothLerp(x0, y0, yt, t, k)
+	{
+		var f = x0.clone().sub(y0).add(yt.clone().sub(y0).multiplyScalar(1 / (k * t)));
+		return yt.clone().sub(yt.clone().sub(y0).multiplyScalar(1 / (k * t))).add(f.clone().multiplyScalar(Math.exp(-k*t)));
+	}
+
+    updateFamiliar(){
+        
+        this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
+
+       
+
+        //this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.1);
+
+        var newTarget = new THREE.Vector3();
+        this.gunModel.getObjectByName("Familiar").getWorldPosition(newTarget);
+
+
+        var distanceTo = this.familiarMesh.userData.positions.cur.distanceTo(newTarget);
+        var distanceToOldTarget = this.familiarMesh.userData.positions.cur.distanceTo(this.familiarMesh.userData.positions.target);
+
+
+        var distanceBetween = newTarget.distanceTo(this.familiarMesh.userData.positions.target);
+
+
+     
+        //this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
+
+  
+        var toTargetNorm = newTarget.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
+        this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
+      
+     
+        //this.familiarMesh.userData.velocity = this.familiarMesh.userData.velocity.clone().add(toTargetNorm.clone().multiplyScalar(-0.2));
+        this.familiarMesh.userData.velocity = toTargetNorm.clone().multiplyScalar(-0.1).multiplyScalar(distanceBetween);
+        
+        
+    
+        //console.log(new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), this.familiarMesh.userData.relativePos.length()));
+
+        this.familiarMesh.userData.relativePos = this.familiarMesh.userData.velocity.clone().multiplyScalar(scene.userData.globalDelta).add(this.familiarMesh.userData.relativePos).clampLength(0,0.03); // use delta time?
+
+
+        // this.familiarMesh.userData.relativePos.length()
+        this.familiarMesh.userData.relativePos = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), 0.1)
+
+        this.familiarMesh.userData.positions.cur = newTarget.clone().add(this.familiarMesh.userData.relativePos);
+
+        // var toNewTargetNorm = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
+        // if(distanceTo > distanceToOldTarget){
+        //     this.familiarMesh.userData.positions.cur = newTarget.clone().sub(toTargetNorm.clone().multiplyScalar(0.05));
+        // }
+        
+        // if(distanceTo >= 0.05){
+        //     //this.familiarMesh.userData.positions.cur = newTarget.clone().sub(toTargetNorm.clone().multiplyScalar(0.05));
+
+
+        //     this.familiarMesh.userData.positions.cur = newTarget;
+
+        // }
+
+        //this.familiarMesh.userData.positions.cur = this.SuperSmoothLerp(this.familiarMesh.userData.positions.cur,this.familiarMesh.userData.positions.target,newTarget,scene.userData.globalDelta, 0.8);
+
+        this.familiarMesh.userData.positions.target.copy(newTarget); 
+
+        
+
+
+
+       // this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.0001);
+       // this.familiarMesh.userData.relativePos = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur);
+
+
+
+
+
+        //new TWEEN.Tween(this.familiarMesh.userData.positions.cur).to({x: this.familiarMesh.userData.positions.target.x, y: this.familiarMesh.userData.positions.target.y, z: this.familiarMesh.userData.positions.target.z},10);
+      
+
+        //console.log(this.familiarMesh.userData.positions.target);
+
+
+        this.familiarMesh.material.map = this.noAmmoTexture;
+        this.familiarMesh.material.map.needsUpdate = true;
+      
+
+        this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur);
+        this.familiarMesh.lookAt(this._camera.position);
+
+        this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
+
+        
+        
+        // this.familiarMesh.updateMatrix();
+        // this.familiarMesh.updateWorldMatrix(true,true);
+        // this.familiarMesh.updateMatrixWorld(true);
     }
 
 
@@ -479,11 +627,24 @@ export class GunController{
         var ctx = this.canvasDestination.getContext("2d");
         ctx.clearRect(0,0,this.canvasDestination.width,this.canvasDestination.height);
         var textWidth = ctx.measureText(destinationText).width;
+
+        ctx.font = "70px Comic Sans MS";
+        ctx.lineWidth = 3; 
+   
+    
+        // scale text if its too long
+        if(textWidth > this.canvasDestination.width){
+    
+    
+            ctx.font = `${ (this.canvasDestination.width / textWidth)* 70}px Comic Sans MS`;
+            ctx.lineWidth = (this.canvasDestination.width / textWidth)*3; 
+            textWidth = ctx.measureText(destinationText).width;
+    
+        } 
  
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'black'
         ctx.fillText(destinationText, (this.canvasDestination.width/2) - (textWidth/2), (this.canvasDestination.height/2)+25);
-        ctx.lineWidth = 3; 
         ctx.strokeText(destinationText, (this.canvasDestination.width/2) - (textWidth/2), (this.canvasDestination.height/2)+25);
 
         this.destNameUI.material.map.needsUpdate = true;
@@ -511,6 +672,8 @@ export class GunController{
         // } else {
         //     this.animationsMap["walk"].stop();
         // }
+
+        this.updateFamiliar()
 
        if(scene.userData.changingScene){
             this.updateDestinationText();
