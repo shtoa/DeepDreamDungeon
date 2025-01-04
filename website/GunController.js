@@ -488,6 +488,20 @@ export class GunController{
 
             this.familiarMesh.userData.relativePos = new THREE.Vector3(0,0,0);
             this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
+            this.familiarMesh.userData.addTranslation = new THREE.Vector3(0,0,0);
+
+            new TWEEN.Tween(this.familiarMesh.userData.addTranslation)
+            .to({y:0.015}, 1000)
+            .yoyo(true)
+            .easing(TWEEN.Easing.Sinusoidal.InOut)
+            .repeat(Infinity)
+            .start()
+
+
+       
+
+            //    .easing(TWEEN.Easing.Cubic.InOut)
+ 
             
         
             scene.add(this.familiarMesh);
@@ -511,8 +525,8 @@ export class GunController{
             this.familiarMesh.updateWorldMatrix(true,true);
             this.familiarMesh.updateMatrixWorld(true);
 
-            console.log(this.familiarMesh.position);
-            console.log(this.gunModel.getObjectByName("Familiar").position);
+            // console.log(this.familiarMesh.position);
+            // console.log(this.gunModel.getObjectByName("Familiar").position);
 
 
             //#endregion
@@ -588,7 +602,7 @@ export class GunController{
 
         this.familiarMesh.userData.positions.target.copy(newTarget); 
 
-        
+    
 
 
 
@@ -607,10 +621,13 @@ export class GunController{
 
         this.familiarMesh.material.map = this.noAmmoTexture;
         this.familiarMesh.material.map.needsUpdate = true;
-      
+        
+       
 
-        this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur);
+        this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur.clone().add(this.familiarMesh.userData.addTranslation));
+
         this.familiarMesh.lookAt(this._camera.position);
+     
 
         this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 

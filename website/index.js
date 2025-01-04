@@ -41,6 +41,11 @@ var faceHelper;
 var portalRoom;
 var borderSize = 40;
 
+var themeTrackerCreature;
+
+
+var uiAnimMixer;
+
 var borderCornerList = [];
 
 const preload = async() =>{
@@ -62,29 +67,6 @@ const preload = async() =>{
     var fLoader2 = await new FBXLoader();
     await fLoader2.load("borderCorner.fbx", (object)=>
             {
-                // var topLeftCorner = new THREE.Object3D().copy(object);
-                // topLeftCorner.scale.set(2,2,2);
-                // topLeftCorner.position.set(-window.innerWidth/2+13-borderSize,window.innerHeight/2-13+borderSize,-1300);
-                // borderCornerList.push(topLeftCorner);
-
-                // var bottomLeftCorner = new THREE.Object3D().copy(object);
-                // bottomLeftCorner.scale.set(2,2,2);
-                // bottomLeftCorner.position.set(-window.innerWidth/2+13-borderSize,-window.innerHeight/2+13-borderSize,-1300);
-                // bottomLeftCorner.rotateZ(Math.PI/2);
-                // borderCornerList.push(bottomLeftCorner);
-
-                // var bottomRightCorner = new THREE.Object3D().copy(object);
-                // bottomRightCorner.scale.set(2,2,2);
-                // bottomRightCorner.position.set(window.innerWidth/2-13+borderSize,-window.innerHeight/2+13-borderSize,-1300);
-                // bottomRightCorner.rotateZ(Math.PI);
-                // borderCornerList.push(bottomRightCorner);
-
-                // var topRightCorner = new THREE.Object3D().copy(object);
-                // topRightCorner.scale.set(2,2,2);
-                // topRightCorner.position.set(window.innerWidth/2-13+borderSize,window.innerHeight/2-13+borderSize,-1300);
-                // topRightCorner.rotateZ(3*Math.PI/2);
-                // borderCornerList.push(topRightCorner);
-
 
                 for(var i = 0; i < 4; i++){
                   
@@ -103,6 +85,30 @@ const preload = async() =>{
                     postScene.add(corner);
                 })
             })
+
+
+
+
+    await fLoader2.load("handMonster1.fbx", (object)=>{
+        
+        themeTrackerCreature = object; 
+
+        themeTrackerCreature.name = "themeTracker"
+
+        themeTrackerCreature.scale.set(1.2,1.2,1.2)
+        themeTrackerCreature.position.set(-250,-150,-1300);
+        themeTrackerCreature.rotateY(Math.PI/2)
+
+        uiAnimMixer = new THREE.AnimationMixer( themeTrackerCreature );
+ 
+        var anim = uiAnimMixer.clipAction( themeTrackerCreature.animations[0] );
+        anim.play();
+
+        postScene.add(themeTrackerCreature);
+
+        console.log(themeTrackerCreature);
+    })
+
 
 
     await setup();
@@ -157,13 +163,13 @@ function init() {
     inputTracker = document.getElementById("handInputs");
     
 
-    curThemeMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry( 1000, 100),
-        new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, transparent: true })
-    );
+    // curThemeMesh = new THREE.Mesh(
+    //     new THREE.PlaneGeometry( 1000, 100),
+    //     new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, transparent: true })
+    // );
 
-    curThemeMesh.position.set(0,window.innerHeight/2 - 100,-1500);
-    postScene.add(curThemeMesh);
+    // curThemeMesh.position.set(0,window.innerHeight/2 - 100,-1500);
+    // postScene.add(curThemeMesh);
 
 
     const container = document.createElement( 'div' );
@@ -332,6 +338,8 @@ function init() {
 
     createCurThemeTexture();
 
+    console.log(postScene)
+
     animate();
 
 }
@@ -350,6 +358,9 @@ function createCurThemeTexture(){
       context.font = "70px Comic Sans MS";
 
       curThemeTexture = new THREE.CanvasTexture(curThemeCanvas);
+
+
+      
 
       updateCurThemeTexture()
 }
@@ -381,8 +392,18 @@ function updateCurThemeTexture(){
     ctx.strokeText(curThemeText, (curThemeCanvas.width/2) - (textWidth/2), (curThemeCanvas.height/2)+25);
    
 
-    curThemeMesh.material.map = curThemeTexture;
-    curThemeMesh.material.map.needsUpdate = true;
+    //curThemeMesh.material.map = curThemeTexture;
+    //curThemeMesh.material.map.needsUpdate = true;
+
+
+    if(postScene.getObjectByName("themeTracker")){
+        var tracker = postScene.getObjectByName("themeTracker");
+        tracker.getObjectByName("themePlane").material.map = curThemeTexture;
+        tracker.getObjectByName("themePlane").material.needsUpdate = true;
+        tracker.getObjectByName("themePlane").material.map.needsUpdate = true;
+     
+
+    }
 
 }
 
@@ -530,6 +551,9 @@ function animate() {
 
     //controls.update()
 
+    if(uiAnimMixer){
+        uiAnimMixer.update(scene.userData.globalDelta);
+    }
     TWEEN.update();
    
     // handHelper.getPose()
