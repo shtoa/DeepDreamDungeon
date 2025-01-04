@@ -74,6 +74,7 @@ export class HandTrackHelper {
         // check if there are hands in the video frame
         if(typeof(result) != undefined){
             // check if there is a poseRecognized
+        
             if(result.gestures.length > 0){
                 console.log(result.gestures[0][0].categoryName);
                 return result.gestures[0][0].categoryName;
