@@ -47,6 +47,7 @@ export class FirstPersonCamera{
         //#endregion
 
         this.GunController = new GunController(camera, this);
+        this.teleportEvent = new Event("teleport");
 
     }
 
@@ -208,6 +209,8 @@ export class FirstPersonCamera{
                     
                     scene.userData.destinationRoom = scene.userData.curRoom;
                     scene.userData.curRoom = newRoom;
+
+                    document.dispatchEvent(this.teleportEvent);
 
                     // fix player translation 
                     this._translation = scene.userData.inPortal.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation));

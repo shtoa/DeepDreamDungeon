@@ -47,6 +47,7 @@ var themeTrackerCreature;
 var uiAnimMixer;
 
 var borderCornerList = [];
+var themeLabelVertex, themeLabelFragment, themeLabelMaterial;
 
 const preload = async() =>{
 
@@ -98,25 +99,110 @@ const preload = async() =>{
         themeTrackerCreature.scale.set(1.2,1.2,1.2)
         themeTrackerCreature.position.set(-250,-150,-1300);
         themeTrackerCreature.rotateY(Math.PI/2)
+        themeTrackerCreature.rotateZ(Math.PI/20)
 
         uiAnimMixer = new THREE.AnimationMixer( themeTrackerCreature );
  
-        var anim = uiAnimMixer.clipAction( themeTrackerCreature.animations[0] );
-        anim.play();
+        themeTrackerCreature.userData.IdleAnim = uiAnimMixer.clipAction( themeTrackerCreature.animations[0].clone() );
+        themeTrackerCreature.userData.IdleHand = uiAnimMixer.clipAction( themeTrackerCreature.animations[0].clone() );
+        themeTrackerCreature.userData.TeleportAnim = uiAnimMixer.clipAction(themeTrackerCreature.animations[2]);
+ 
+        excludeBones(themeTrackerCreature.userData.IdleAnim, ["handLeft"])
+        includeBones(themeTrackerCreature.userData.TeleportAnim, ["handLeft"])
+        includeBones(themeTrackerCreature.userData.IdleHand, ["handLeft"])
+
+        console.log(themeTrackerCreature.userData.IdleAnim)
+
+
+        themeTrackerCreature.userData.TeleportAnim.clampWhenFinished = true;
+        themeTrackerCreature.userData.TeleportAnim.loop = THREE.LoopOnce;
+
+        themeTrackerCreature.userData.IdleAnim.play();
+        themeTrackerCreature.userData.IdleHand.play();
 
         postScene.add(themeTrackerCreature);
 
         console.log(themeTrackerCreature);
+
+        if(uiAnimMixer){
+            console.log("LOADED MIXER")
+            uiAnimMixer.addEventListener("finished",(e)=>{
+                
+                var tracker = postScene.getObjectByName("themeTracker");
+           
+                // if(e.action._clip.name = "Armature|idle.001"){
+                //     tracker.userData.IdleAnim.stop();
+                //     tracker.userData.TeleportAnim.reset().play();
+             
+                // }
+        
+                if(e.action._clip.name = "Armature|transition"){
+                    tracker.userData.IdleAnim.loop = THREE.LoopRepeat;
+                    tracker.userData.IdleHand.reset().play();
+                    tracker.userData.TeleportAnim.stop();
+        
+                }
+                
+            
+        
+        
+            });
+        }
     })
-
-
-
+    
     await setup();
 
 
     
    
 }
+
+function includeBones(action, filterBones){
+  // function by mjurczyk on https://discourse.threejs.org/t/animation-replace-blend-mode/51804
+  console.log(action);
+
+  const filteredBindings = [];
+  const filteredInterpolants = [];
+  const bindings = action._propertyBindings || [];
+  const interpolants = action._interpolants || [];
+
+  bindings.forEach((propertyMixer, index) => {
+    const { binding } = propertyMixer;
+
+
+
+    if ((binding && binding.node && !filterBones.includes(binding.node.name))) {
+      return;
+    } else {
+      filteredBindings.push(propertyMixer);
+      filteredInterpolants.push(interpolants[index]);
+
+    }
+    });
+
+  action._propertyBindings = filteredBindings;
+  action._interpolants = filteredInterpolants;
+}
+
+function excludeBones(action, exculdeBones){
+    const filteredBindings = [];
+    const filteredInterpolants = [];
+    const bindings = action._propertyBindings || [];
+    const interpolants = action._interpolants || [];
+  
+    bindings.forEach((propertyMixer, index) => {
+      const { binding } = propertyMixer;
+  
+      if (!(binding &&  binding.node && exculdeBones.includes( binding.node.name))) {
+        filteredBindings.push(propertyMixer);
+        filteredInterpolants.push(interpolants[index]);
+      }
+    });
+  
+    action._propertyBindings = filteredBindings;
+    action._interpolants = filteredInterpolants;
+}
+
 
 const setup = async() =>{
     
@@ -337,10 +423,62 @@ function init() {
     // room.surfaces.push(testMesh);
 
     createCurThemeTexture();
+    initThemelabelShader();
 
     console.log(postScene)
 
     animate();
+
+}
+
+function initThemelabelShader(){
+    themeLabelVertex = `
+    varying vec4 vPos;
+    varying vec2 vUv;
+    uniform float time;
+
+    void main() {
+
+
+        float zPos = vPos.z + 0.1*sin(time*10.0+position.y*5.0)*(position.y-2.0);
+        vec3 newPos = vec3(position.xy, zPos);
+
+        vPos = projectionMatrix * modelViewMatrix * vec4( newPos, 1.0 );
+        gl_Position = vPos;
+        vUv = uv;
+
+    }
+`;
+themeLabelFragment = `
+    varying vec4 vPos;
+    uniform sampler2D themeTexture;
+    varying vec2 vUv;
+    uniform float time;
+
+    void main() {
+        
+        vec4 themeTexture = texture2D(themeTexture,vUv);
+        gl_FragColor =  themeTexture;
+   
+    }
+    `;
+    
+
+    themeLabelMaterial = new THREE.ShaderMaterial( {
+
+
+        uniforms: {
+            themeTexture: {value: curThemeTexture},
+            time: {value: 0}
+        },
+    
+        // Declare Vertex and Fragment Shader
+        vertexShader: themeLabelVertex,
+        fragmentShader: themeLabelFragment,
+        
+        uniformsNeedUpdate: true  
+    
+    } );
 
 }
 
@@ -363,10 +501,46 @@ function createCurThemeTexture(){
       
 
       updateCurThemeTexture()
+
+    
 }
 
-function updateCurThemeTexture(){
+
+
+document.addEventListener("teleport",(e)=>{
+
+    var tracker = postScene.getObjectByName("themeTracker");
+    tracker.userData.IdleHand.fadeOut(0.5);
+    tracker.userData.TeleportAnim.fadeIn(0.5).reset().play(); // FIX ME : JUMPING ON TELEPORT BUG ON THE UI
     
+    updateCurThemeTexture();
+
+    if(postScene.getObjectByName("themeTracker")){
+        var tracker = postScene.getObjectByName("themeTracker");
+      
+      
+       
+
+        themeLabelMaterial.uniforms.themeTexture.value = curThemeTexture;
+        themeLabelMaterial.uniforms.themeTexture.value.needsUpdate = true;
+ 
+
+
+        // tracker.getObjectByName("themePlane").material.map = curThemeTexture;
+        // tracker.getObjectByName("themePlane").material.needsUpdate = true;
+        // tracker.getObjectByName("themePlane").material.map.needsUpdate = true;
+
+    }
+    
+ 
+
+});
+
+
+
+
+function updateCurThemeTexture(){
+
     var curThemeText = scene.userData.curRoom._curTheme;    
 
     var ctx = curThemeCanvas.getContext("2d");
@@ -390,20 +564,24 @@ function updateCurThemeTexture(){
    
     ctx.fillText(curThemeText, (curThemeCanvas.width/2) - (textWidth/2), (curThemeCanvas.height/2)+25);
     ctx.strokeText(curThemeText, (curThemeCanvas.width/2) - (textWidth/2), (curThemeCanvas.height/2)+25);
+
+               
+ 
    
-
-    //curThemeMesh.material.map = curThemeTexture;
-    //curThemeMesh.material.map.needsUpdate = true;
-
-
     if(postScene.getObjectByName("themeTracker")){
         var tracker = postScene.getObjectByName("themeTracker");
-        tracker.getObjectByName("themePlane").material.map = curThemeTexture;
-        tracker.getObjectByName("themePlane").material.needsUpdate = true;
-        tracker.getObjectByName("themePlane").material.map.needsUpdate = true;
-     
+        if(tracker.getObjectByName("themePlane").material != themeLabelMaterial){
+            tracker.getObjectByName("themePlane").material = themeLabelMaterial;
+            themeLabelMaterial.uniforms.themeTexture.value = curThemeTexture;
+            themeLabelMaterial.uniforms.themeTexture.value.needsUpdate = true
+ 
 
+        }
+
+
+     
     }
+   
 
 }
 
@@ -553,6 +731,9 @@ function animate() {
 
     if(uiAnimMixer){
         uiAnimMixer.update(scene.userData.globalDelta);
+
+        
+        themeLabelMaterial.uniforms.time.value = clock.getElapsedTime(); // FIX ME MOVE SOMEWHERE ELSE
     }
     TWEEN.update();
    
@@ -637,9 +818,9 @@ function animate() {
     postRenderMesh.material.map = postRenderTexture;
     postRenderMesh.material.map.needsUpdate = true;
 
-    renderer.render(postScene, postCamera)
+    renderer.render(postScene, postCamera);
 
-    updateCurThemeTexture();
+    updateCurThemeTexture(); // move this FIX ME
 }
 
 document.addEventListener("fire",()=>{processIndex(actionList);});
