@@ -483,6 +483,12 @@ export class GunController{
 
             //#region familiar
             this.familiarMesh = new THREE.Mesh(new THREE.SphereGeometry(0.007, 32, 16 ), new THREE.MeshPhongMaterial());
+            
+           // this.familiarMesh = scene.userData.faceMesh; // FIXME: DO PROPER ASYNC
+
+            console.log(this.familiarMesh);
+
+            this.familiarMesh.scale.set(0.05,0.05,0.05);
             this.familiarMesh.material.map = this.noAmmoTexture;
 
 
@@ -750,6 +756,7 @@ export class GunController{
 
      
         this.reticle.rotateZ(this.reticleRotationZ);
+        
         TWEEN.update();
         if(this.portalTest){
             this.portalTest._updatePortal();

@@ -537,11 +537,32 @@ function initThemelabelShader(){
     varying vec2 vUv;
     uniform float time;
     varying vec3 vnormal;
+    uniform float rollTime;
 
     void main() {
    
         float zPos = vPos.z + 0.4*sin(time*10.0+position.y*3.0)*(uv.x);
-        vec3 newPos = vec3(position.xy, zPos);
+        vec3 newPos = vec3(position.xy, (1.0-rollTime)*(1.0-rollTime)*zPos);
+
+        //vec3 newPos = position;
+
+        float t = uv.x;
+        float i = 1.0-rollTime;
+
+        //i = 0.0;
+
+        float pi = 355.0/113.0;
+
+        float spiralSize = 0.2; // 0.3 spiral + 0.5 offset also works
+
+        //i = 0.2;
+
+        float zRoll = -spiralSize*(1.0/(t-i+0.5))*(sin(pi*4.0*(t-i)))-4.0*i+1.0;
+        float yRoll =-spiralSize*(1.0/(t-i+0.5))*(cos(pi*4.0*(t-i)))+0.3;
+
+        if(t>(i) && i>=0.0){
+            newPos = vec3(position.x, zRoll, yRoll);
+        }
 
         vPos = projectionMatrix * modelViewMatrix * vec4( newPos, 1.0 );
         gl_Position = vPos;
@@ -560,14 +581,21 @@ themeLabelFragment = `
     varying vec3 vnormal;
     uniform vec3 eye;
 
+    uniform float rollTime;
+
+
     void main() {
         vec4 finalColor;
         vec4 themeTexture = texture2D(themeTexture,vUv);
-        finalColor = vec4(themeTexture.xyz,1.0);
+        finalColor = vec4(themeTexture.xyz,1.0-rollTime);
+
+        vec4 bgCol = vec4(0.2,0,0,1.0);
+
+        finalColor = mix(finalColor, bgCol, rollTime);
 
         if(themeTexture.w < 0.2){
 
-            finalColor = vec4(0.2,0,0,1.0);
+            finalColor = bgCol;
         }
 
 
@@ -585,7 +613,8 @@ themeLabelFragment = `
 
         uniforms: {
             themeTexture: {value: curThemeTexture},
-            time: {value: 0}
+            time: {value: 0},
+            rollTime: {value: 0}
         },
     
         // Declare Vertex and Fragment Shader
@@ -632,22 +661,25 @@ document.addEventListener("teleport",(e)=>{
     tracker.userData.IdleHand.fadeOut(0.5);
     tracker.userData.TeleportAnim.fadeIn(0.5).reset().play(); // FIX ME : JUMPING ON TELEPORT BUG ON THE UI
     
-    updateCurThemeTexture();
+
 
     if(postScene.getObjectByName("themeTracker")){
         var tracker = postScene.getObjectByName("themeTracker");
       
       
-       
 
-        themeLabelMaterial.uniforms.themeTexture.value = curThemeTexture;
-        themeLabelMaterial.uniforms.themeTexture.value.needsUpdate = true;
+     
  
 
+        new TWEEN.Tween(themeLabelMaterial.uniforms.rollTime).to({value:1},1000).easing(TWEEN.Easing.Sinusoidal.InOut).start().onComplete(()=>{
+            updateCurThemeTexture();
+            themeLabelMaterial.uniforms.themeTexture.value.needsUpdate = true;
+            new TWEEN.Tween(themeLabelMaterial.uniforms.rollTime).to({value:0},1000).easing(TWEEN.Easing.Sinusoidal.InOut).start()
 
-        // tracker.getObjectByName("themePlane").material.map = curThemeTexture;
-        // tracker.getObjectByName("themePlane").material.needsUpdate = true;
-        // tracker.getObjectByName("themePlane").material.map.needsUpdate = true;
+
+         
+            
+        })
 
     }
     
@@ -844,12 +876,11 @@ function animate() {
     requestAnimationFrame( animate );
 
     if(faceHelper.mesh && !addedMeshToScene){
-        console.log("face Mesh exists")
-        postScene.add(faceHelper.mesh);
-        faceHelper.mesh.position.set(-500,0,-1000);
-        faceHelper.mesh.scale.set(500,500,500);
+        scene.userData.faceMesh = faceHelper.mesh
+        // faceHelper.mesh.position.set(-500,0,-1000);
+        // faceHelper.mesh.scale.set(500,500,500);
     
-        faceHelper.mesh.rotateX(Math.PI)
+        // faceHelper.mesh.rotateX(Math.PI)
         //faceHelper.mesh.rotateZ(Math.PI)
        
         console.log(faceHelper.mesh);
@@ -870,6 +901,8 @@ function animate() {
         themeLabelMaterial.uniforms.time.value = clock.getElapsedTime(); // FIX ME MOVE SOMEWHERE ELSE
     }
     TWEEN.update();
+    themeLabelMaterial.uniforms.rollTime.needsUpdate = true;
+
    
     // handHelper.getPose()
     faceHelper.getFaceLandmarks().then(() => {

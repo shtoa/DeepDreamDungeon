@@ -4,7 +4,7 @@ import {
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
-  
+
 /* 
 
 Hand Track Helper Class 
@@ -15,17 +15,18 @@ Hand Track Helper Class
 
 */
 
-// code developed myself based on code from: https://codepen.io/mediapipe-preview/pen/OJBVQJm
 
+
+// code developed myself based on code from: https://codepen.io/mediapipe-preview/pen/OJBVQJm
 export class FaceTrackHelper {
 
     // global gestureRecognizer variable
     faceLandmarker;
     video;
+    
 
     constructor(){
         // FIX ME: Remove or Add to this
-
         if(document.getElementById('video') !== null){
             this.video = document.getElementById('video');
         }
@@ -39,10 +40,12 @@ export class FaceTrackHelper {
         this.expressionsToRecognize.set("Kiss", {categoryNames: ["mouthPucker"], avgValue: 0})
         this.expressionsToRecognize.set("Pressed",  {categoryNames: ["mouthPressLeft", "mouthPressRight"], avgValue: 0})
 
- 
+        
+    
         this.initializedMesh = false;
         this.mesh;
         this.faceMeshTexture = new THREE.TextureLoader().load("sad.png");
+        this.dummyList = [];
 
         this.blendShapesToRecognize = new Map([
             ["jawOpen",0],
@@ -3241,14 +3244,48 @@ export class FaceTrackHelper {
         geometry.setAttribute( 'position', new THREE.BufferAttribute(new Float32Array(vPos),3));
         geometry.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(UVS.flat()), 2));
         geometry.setIndex( new THREE.BufferAttribute( new Uint16Array(FACES), 1 ) );
-        const material = new THREE.MeshPhongMaterial();
+        const material = new THREE.MeshPhongMaterial({transparent: true, side: THREE.DoubleSide});
         material.needsUpdate = true;
 
         await geometry.computeVertexNormals();
         geometry.getAttribute("uv").needsUpdate = true;
 
-        const mesh = new THREE.Mesh( geometry, material );
-        console.log(mesh);
+        //const mesh = new THREE.Mesh( geometry, material );
+
+
+        const mesh = new THREE.InstancedMesh( geometry, material,10);
+
+        
+
+       
+        for(let i=0; i<10; i++){
+            var dummy = new THREE.Object3D();
+            
+            //random rotaitons
+            //dummy.position.copy(new THREE.Vector3().randomDirection().multiplyScalar(0.2))
+            //dummy.rotation.set(Math.random()*2*Math.PI, Math.random()*2*Math.PI, Math.random()*2*Math.PI)
+
+            // around a circle
+     
+            dummy.rotateZ(Math.PI);
+            dummy.rotateY(Math.PI);
+
+        
+
+   
+            dummy.position.copy(new THREE.Vector3(0.5,0,0));
+            dummy.rotateY(i*2*Math.PI/10);
+            //dummy.rotation.set(0,i*2*Math.PI/10,Math.PI);
+        
+            dummy.scale.x = dummy.scale.y = dummy.scale.z = 0.5;
+
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+            this.dummyList.push(dummy);
+        }
+
+
+
         this.mesh = mesh;
 
         
