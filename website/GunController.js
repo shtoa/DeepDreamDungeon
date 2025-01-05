@@ -484,7 +484,7 @@ export class GunController{
             //#region familiar
             this.familiarMesh = new THREE.Mesh(new THREE.SphereGeometry(0.007, 32, 16 ), new THREE.MeshPhongMaterial());
             
-           // this.familiarMesh = scene.userData.faceMesh; // FIXME: DO PROPER ASYNC
+            //this.familiarMesh = scene.userData.faceMesh; // FIXME: DO PROPER ASYNC
 
             console.log(this.familiarMesh);
 

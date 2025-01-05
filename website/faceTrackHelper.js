@@ -3257,7 +3257,7 @@ export class FaceTrackHelper {
 
         
 
-       
+       // inspired by https://www.youtube.com/watch?v=dKg5H1OtDK8&ab_channel=WaelYasmina
         for(let i=0; i<10; i++){
             var dummy = new THREE.Object3D();
             

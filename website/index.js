@@ -185,6 +185,7 @@ function includeBones(action, filterBones){
 }
 
 function excludeBones(action, exculdeBones){
+    // function by mjurczyk on https://discourse.threejs.org/t/animation-replace-blend-mode/51804
     const filteredBindings = [];
     const filteredInterpolants = [];
     const bindings = action._propertyBindings || [];
@@ -579,6 +580,7 @@ themeLabelFragment = `
     varying vec2 vUv;
     uniform float time;
     varying vec3 vnormal;
+    uniform sampler2D alphaMask;
     uniform vec3 eye;
 
     uniform float rollTime;
@@ -587,9 +589,11 @@ themeLabelFragment = `
     void main() {
         vec4 finalColor;
         vec4 themeTexture = texture2D(themeTexture,vUv);
+        vec4 alphaMask = texture2D(alphaMask,vUv);
         finalColor = vec4(themeTexture.xyz,1.0-rollTime);
 
-        vec4 bgCol = vec4(0.2,0,0,1.0);
+        vec4 bgCol = vec4(0.2,0,0,alphaMask.x);
+    
 
         finalColor = mix(finalColor, bgCol, rollTime);
 
@@ -601,18 +605,21 @@ themeLabelFragment = `
 
         float testTime = (1.0-mod(time/2.0,2.0));
         gl_FragColor = vec4(finalColor.xyz,finalColor.w);
-        if(testTime >= vUv.x){
-
-        }
+        
+      
     }
     `;
     
+    var themeAlphaTex = new THREE.TextureLoader().load("alphaTestBanner.png");
+    themeAlphaTex.minFilter = THREE.NearestFilter;
+    themeAlphaTex.magFilter = THREE.NearestFilter
 
     themeLabelMaterial = new THREE.ShaderMaterial( {
 
 
         uniforms: {
             themeTexture: {value: curThemeTexture},
+            alphaMask: {value: themeAlphaTex},
             time: {value: 0},
             rollTime: {value: 0}
         },
@@ -622,6 +629,7 @@ themeLabelFragment = `
         fragmentShader: themeLabelFragment,
 
         side: THREE.DoubleSide,
+
         
         uniformsNeedUpdate: true,  
         transparent: true
