@@ -58,7 +58,7 @@ export class FirstPersonCamera{
 
     update(delta){
     
-        if(!(document.pointerLockElement===null)){
+        if(!(document.pointerLockElement===null)||  ('ontouchstart' in window) ){
         
             
             // order is importants

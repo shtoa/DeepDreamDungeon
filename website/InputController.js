@@ -20,6 +20,9 @@ export class InputController{
         this._keys = {};
         this._prevKeys = {};
         this._isTouching;
+        this._touchMoved = false;
+        this._tap = false;
+        this._firstMove = true;
 
         document.addEventListener('mousedown', (e)=> this._onMouseDown(e), false);
         document.addEventListener('mouseup', (e)=> this._onMouseUp(e), false);
@@ -57,7 +60,7 @@ export class InputController{
     }
 
     _onMouseMove(e){
-
+        
 
         this._current.mouseX = e.pageX - window.innerWidth / 2;
         this._current.mouseY = e.pageY - window.innerHeight / 2;
@@ -85,36 +88,65 @@ export class InputController{
         console.log("TOUCH STARTED");
         const touch = e.touches[0];
 
-        this._previous.mouseX = touch.pageX - window.innerWidth / 2;
-        this._previous.mouseY = touch.pageY - window.innerWidth / 2;
+        if(this._previous === null){
+            this._previous = {...this._current};
+        } 
+
+        this._previous.mouseX = touch.clientX;
+        this._previous.mouseY = touch.clientY;
+
+        //console.log(this._previous.mouseY);
+        this._tap = false;
 
     }
 
     _onTouchMove(e){
         e.preventDefault();
 
+        this._touchMoved = true;
+
         console.log("TOUCH MOVED");
 
         const touch = e.touches[0];
+
+        if(this._firstMove){
+            this._previous.mouseX = touch.clientX;
+            this._previous.mouseY = touch.clientY;
+
+            this._firstMove = false;
+        }
         
-        this._current.mouseX = touch.pageX - window.innerWidth / 2;
-        this._current.mouseY = touch.pageY - window.innerHeight / 2;
+        this._current.mouseX = touch.clientX;
+        this._current.mouseY = touch.clientY;
 
         this._current.mouseXDelta = this._current.mouseX - this._previous.mouseX;
         this._current.mouseYDelta = this._current.mouseY - this._previous.mouseY;
 
     }
     _onTouchEnd(e){
+
+        if(!this._touchMoved){
+            this._tap = true;
+            this._touchMoved = false;
+        }
+
+        this._isTouching = false;
+
+        this._firstMove = true;
+
         e.preventDefault();
         console.log("TOUCH ENDED");
+
+
     }
 
 
-    update(_){
+    update(){
         this._previous = {...this._current};
         
         this._current.mouseXDelta = 0;
         this._current.mouseYDelta = 0;
+    
     }
 
 }
