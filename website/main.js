@@ -254,8 +254,94 @@ function init() {
     createCurThemeTexture();
     initThemelabelShader();
 
+    if( ('ontouchstart' in window)){
+        scene.userData.joyStickDelta = new THREE.Vector2(0,0);
+        initializeJoystick();
+    }
+
     // Start the animation Loop
     animate();
+
+    
+
+}
+
+function initializeJoystick(){
+    var joyStickCanvas = document.createElement("div")
+    joyStickCanvas.width = 150;
+    joyStickCanvas.height = 150;
+    joyStickCanvas.style.width = "150px";
+    joyStickCanvas.style.height = "150px";
+    joyStickCanvas.style.position = "absolute";
+    joyStickCanvas.style.left ="10%"
+    joyStickCanvas.style.bottom ="10%"
+    joyStickCanvas.style.backgroundColor = "red";
+    document.body.prepend(joyStickCanvas)
+    joyStickCanvas.id = "joystickDiv"
+    //const context = joyStickCanvas.getContext("2d");
+
+    var joyStickHead = document.createElement("img");
+    joyStickHead.src = "./sad.png";
+    joyStickHead.width = 50;
+    joyStickHead.height = 50;
+    joyStickHead.style.left ="50px"
+    joyStickHead.style.bottom ="50px"
+    joyStickHead.style.position = "absolute";
+    joyStickHead.id = "joystickHead";
+    joyStickCanvas.appendChild(joyStickHead);
+
+
+    scene.userData.oldJoystickPos = new THREE.Vector2(-joyStickHead.getBoundingClientRect().x, -joyStickHead.getBoundingClientRect().y);
+    scene.userData.defaultJoystickBr = document.getElementById("joystickHead").getBoundingClientRect();
+
+    joyStickHead.addEventListener("touchmove", (e)=>{
+
+        var singleTouch = e.touches[0];
+      //  console.log(br.left);
+        var center = new THREE.Vector2(50,50);
+        var dest = new THREE.Vector2(singleTouch.clientX-scene.userData.defaultJoystickBr.left+25,scene.userData.defaultJoystickBr.bottom-singleTouch.clientY+25);
+
+        if(center.distanceTo(dest) < 50){
+             document.getElementById("joystickHead").style.left = String(dest.x)+"px"; // 125
+             document.getElementById("joystickHead").style.bottom = String(dest.y)+"px";
+        } else {
+
+            dest.normalize().multiplyScalar(50);
+            console.log(dest);
+            document.getElementById("joystickHead").style.left = String(dest.x+50)+"px"; // 125
+            document.getElementById("joystickHead").style.bottom = String(dest.y+50)+"px";
+        }
+
+        scene.userData.newJoystickPos = new THREE.Vector2(-joyStickHead.getBoundingClientRect().x, -joyStickHead.getBoundingClientRect().y);
+
+        scene.userData.joyStickDelta = scene.userData.newJoystickPos.clone().sub(scene.userData.oldJoystickPos);
+
+    })
+
+    joyStickHead.addEventListener("touchend", (e)=>{
+
+        document.getElementById("joystickHead").style.left = "50px"
+        document.getElementById("joystickHead").style.bottom = "50px"
+
+        scene.userData.newJoystickPos.copy(scene.userData.oldJoystickPos.clone());
+        scene.userData.joyStickDelta.copy(new THREE.Vector2(0,0));
+
+    })
+
+
+    
+
+
+    // context.beginPath();
+    // context.arc(joyStickCanvas.width/2, joyStickCanvas.height/2, 75, 0, 2 * Math.PI, false);
+    // context.fillStyle = 'black';
+    // context.fill();
+
+    // context.beginPath();
+    // context.arc(joyStickCanvas.width/2, joyStickCanvas.height/2, 30, 0, 2 * Math.PI, false);
+    // context.fillStyle = 'green';
+    // context.fill();
+
 
 }
 
