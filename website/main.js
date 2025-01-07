@@ -51,7 +51,7 @@ const preload = async() =>{
     faceHelper = new FaceTrackHelper();
     await faceHelper.createFaceLandmarker();
 
-    await fetch("./themes/themes.txt").then(res=> res.text()) // TODO: Move to backend'
+    await fetch("themes/themes.txt").then(res=> res.text()) // TODO: Move to backend'
     .then(text=>{
         themes = text.split(/\r\n|\n/);
     });
