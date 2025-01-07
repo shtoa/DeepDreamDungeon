@@ -4,7 +4,7 @@ import { Portal } from "./Portal.js";
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js'; // check if there was reason to use older version
 import { TWEEN } from 'https://unpkg.com/three@0.128.0/examples/jsm/libs/tween.module.min.js';
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
-import {scene, actionList} from './Index.js'
+import {scene, actionList} from './main.js'
 
 // FIX ME USE STATE MACHINE FOR ANIMATIONS
 
