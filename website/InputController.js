@@ -66,8 +66,8 @@ export class InputController{
             this._previous = {...this._current};
         } 
 
-        this._current.mouseXDelta = e.movementX / 2;
-        this._current.mouseYDelta = e.movementY / 2;
+        this._current.mouseXDelta = (this._current.mouseX-this._previous.mouseX) / 2;
+        this._current.mouseYDelta = (this._current.mouseY-this._previous.mouseY) / 2;
         
     }
 
