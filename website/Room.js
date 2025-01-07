@@ -26,11 +26,10 @@ export class Room {
         this.bounds = bounds;
     }
 
-    generateCeiling(_){
+    generateCeiling(){
 
         var gm  = new THREE.PlaneGeometry( this._size.x, this._size.z );
         gm.rotateX(Math.PI/2);
-       // gm.computeVertexNormals();
         
 
         var ceiling = new THREE.Mesh( gm, new THREE.MeshPhongMaterial( ) );
@@ -40,35 +39,33 @@ export class Room {
         ceiling.material.map = new THREE.TextureLoader().load( `./themes/${this._curTheme}/textures/ceiling.png`);
         ceiling.material.needsUpdate = true;
       
-
         return ceiling
     }
 
-    generateWalls(_){
+    generateWalls(){
 
         // rename variables
 
+        // left wall
         var lGM  = new THREE.PlaneGeometry( this._size.x, this._size.y );
-
         var leftWall = new THREE.Mesh( lGM, new THREE.MeshPhongMaterial( ) );
         leftWall.position.set(this._center.x, this._center.y, this._center.z - (this._size.z/2));
   
+        // right wall
         var rGM  = new THREE.PlaneGeometry( this._size.x, this._size.y );
         rGM.rotateY(Math.PI)
-
         var rightWall = new THREE.Mesh( rGM, new THREE.MeshPhongMaterial(  ) );
         rightWall.position.set(this._center.x, this._center.y, this._center.z + (this._size.z/2));
 
+        // front wall
         var fGM =  new THREE.PlaneGeometry( this._size.z, this._size.y);
         fGM.rotateY(-Math.PI/2)
-
         var frontWall = new THREE.Mesh( fGM, new THREE.MeshPhongMaterial(  ) );
         frontWall.position.set(this._center.x + (this._size.x/2), this._center.y, this._center.z);
 
+        // back wall
         var bGM =  new THREE.PlaneGeometry( this._size.z, this._size.y);
         bGM.rotateY(Math.PI/2)
-
-
         var backWall = new THREE.Mesh(bGM, new THREE.MeshPhongMaterial(  ) );
         backWall.position.set(this._center.x - (this._size.x/2) , this._center.y, this._center.z);
 
@@ -83,8 +80,9 @@ export class Room {
         return walls;
     }
 
-    generateFloor(_){
+    generateFloor(){
 
+        // generate floor geometry with normals facing upwards
         var gm  = new THREE.PlaneGeometry( this._size.x, this._size.z );
         gm.rotateX(-Math.PI/2);
        
@@ -99,6 +97,9 @@ export class Room {
     }
 
     updateTheme(newTheme){
+
+        // update theme to the new theme
+        
         this._curTheme = newTheme;
 
         this._ceiling.material.map = new THREE.TextureLoader().load( `./themes/${this._curTheme}/textures/ceiling.png`);

@@ -11,18 +11,22 @@ export class InputController{
             mouseX: 0,
             mouseY: 0,
             mouseXDelta: 0,
-            mouseYDelta: 0
+            mouseYDelta: 0,
         }
 
         this._previous = null; 
         this._keys = {};
         this._prevKeys = {};
+        this._isTouching;
 
         document.addEventListener('mousedown', (e)=> this._onMouseDown(e), false);
         document.addEventListener('mouseup', (e)=> this._onMouseUp(e), false);
         document.addEventListener('mousemove', (e)=> this._onMouseMove(e), false);
         document.addEventListener('keydown', (e)=> this._onKeyDown(e), false);
         document.addEventListener('keyup', (e)=> this._onKeyUp(e), false);
+        document.addEventListener('touchstart', (e)=> this._onTouchStart(e), false);
+        document.addEventListener('touchmove', (e)=> this._onTouchStart(e), false);
+        document.addEventListener('touchend', (e)=> this._onTouchEnd(e), false);
 
     }
 
@@ -72,6 +76,31 @@ export class InputController{
     _onKeyUp(e){
         this._keys[e.keyCode] = false;
     }
+
+    _onTouchStart(e){
+        this._isTouching = true;
+
+    }
+
+    _onTouchMove(e){
+
+        const touch = e.touches[0];
+        
+        this._current.mouseX = touch.pageX - window.innerWidth / 2;
+        this._current.mouseY = touch.pageY - window.innerHeight / 2;
+
+        if(this._previous === null){
+            this._previous = {...this._current};
+        } 
+
+        this._current.mouseXDelta = touch.movementX / 2;
+        this._current.mouseYDelta = touch.movementY / 2;
+
+    }
+    _onTouchEnd(e){
+
+    }
+
 
     update(_){
         this._previous = {...this._current};

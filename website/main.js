@@ -41,6 +41,10 @@ var uiAnimMixer;
 var borderCornerList = [];
 var themeLabelVertex, themeLabelFragment, themeLabelMaterial;
 
+var soundPlayer;
+var inputTracker;
+
+
 const preload = async() =>{
 
     handHelper = new HandTrackHelper();
@@ -135,40 +139,16 @@ const preload = async() =>{
 
 }
 
-
-
 const setup = async() =>{
-    
-    init();
-
+    await init();
 }
-
-
-var categories = [
-    "None",
-    "Closed_Fist",
-    "Open_Palm",
-    "Thumb_Up",
-    "Thumb_Down",
-]
-
-var rect;
-var room;
-var room2;
-
-var curRoom;
-
-var soundPlayer;
-
-var themeTracker;
-var inputTracker;
 
 function init() {
     // https://annakap.medium.com/integrating-ml5-js-posenet-model-with-three-js-b19710e2862b
 
     scene = new THREE.Scene();
     postScene = new THREE.Scene();
-    scene.userData.portalMask = new THREE.TextureLoader().load("./portalMask.png");
+
     scene.userData.changingScene = false;
 
     inputTracker = document.getElementById("handInputs");
@@ -176,8 +156,6 @@ function init() {
     const container = document.createElement( 'div' );
     document.body.appendChild( container );
     container.id = "snuggle"
-
-    rect = document.getElementById("snuggle").getBoundingClientRect()
 
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.05, 500 );
  
@@ -198,25 +176,7 @@ function init() {
     hemiLight.position.set( 0, 600, 0 );
     scene.add( hemiLight );
 
-    const dirLight = new THREE.DirectionalLight( 0xffffff );
-    dirLight.position.set( 0, 200, 100 );
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 180;
-    dirLight.shadow.camera.bottom = - 100;
-    dirLight.shadow.camera.left = - 120;
-    dirLight.shadow.camera.right = 120;
-    scene.add( dirLight );
-
-    const dirLight2 = new THREE.DirectionalLight( 0xffffff );
-    dirLight2.position.set( 0, 200, 100 );
-    dirLight2.castShadow = true;
-    dirLight2.shadow.camera.top = 180;
-    dirLight2.shadow.camera.bottom = - 100;
-    dirLight2.shadow.camera.left = - 120;
-    dirLight2.shadow.camera.right = 120;
-
-    postScene.add(dirLight2);
-
+    setupLighting();
     //#region  borders
     // add border meshes 
 
@@ -242,31 +202,20 @@ function init() {
 
     var roomBounds = new THREE.Box3(new THREE.Vector3(0,0,0), new THREE.Vector3(400,100,200));
 
-    // helper for rooms
-    //const helper = new THREE.Box3Helper( roomBounds, 0xffff00 );
-    //scene.add( helper );
-
-    room = new Room(roomBounds, themes[themeIndex]);
-
-    room2 = new Room(roomBounds.clone().translate(new THREE.Vector3(200,200,200)), themes[3]);
-    curRoom = room;
-    portalRoom = room2;
+    scene.userData.curRoom = new Room(roomBounds, themes[themeIndex]);
+    scene.userData.destinationRoom  = new Room(roomBounds.clone().translate(new THREE.Vector3(200,200,200)), themes[3]);
     
     scene.userData.portalableSurfaces = [];
 
-    room.surfaces.forEach((surface)=>{
-        scene.add(surface);
-        scene.userData.portalableSurfaces.push(surface);
-
-    })
-
-    room2.surfaces.forEach((surface)=>{
+    scene.userData.curRoom.surfaces.forEach((surface)=>{
         scene.add(surface);
         scene.userData.portalableSurfaces.push(surface);
     })
 
-    scene.userData.curRoom = room;
-    scene.userData.destinationRoom = room2;
+    scene.userData.destinationRoom.surfaces.forEach((surface)=>{
+        scene.add(surface);
+        scene.userData.portalableSurfaces.push(surface);
+    })
 
     var canvas = document.createElement('canvas');
     canvas.id = "mainCanvas"
@@ -277,17 +226,20 @@ function init() {
 
     container.appendChild(canvas);
 
+    // setup renderer
+
     renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, canvas: canvas } );
     renderer.setClearColor( 0x000000, 0 );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
+
     container.appendChild( renderer.domElement );
 
     // position player in center 
-    camera.position.set(room._center.x, room._center.y, room._center.z);
+    camera.position.copy(scene.userData.curRoom._center);
 
-    fpsCamera = new FirstPersonCamera(camera, room, portalRoom);
+    fpsCamera = new FirstPersonCamera(camera);
 
     window.addEventListener( 'resize', onWindowResize, false );
 
@@ -295,7 +247,6 @@ function init() {
     soundPlayer = new Tone.Player(`themes/${themes[themeIndex]}/sounds/${themes[themeIndex]}.wav`) //.toDestination();
     soundPlayer.autostart = true;
     soundPlayer.loop = true;
-
 
     // text labels
     updateGestureText("Gesture List: \n")
@@ -305,6 +256,29 @@ function init() {
 
     // Start the animation Loop
     animate();
+
+}
+
+function setupLighting(){
+
+    const dirLight = new THREE.DirectionalLight( 0xffffff );
+    dirLight.position.set( 0, 200, 100 );
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 180;
+    dirLight.shadow.camera.bottom = - 100;
+    dirLight.shadow.camera.left = - 120;
+    dirLight.shadow.camera.right = 120;
+    scene.add( dirLight );
+
+    const dirLight2 = new THREE.DirectionalLight( 0xffffff );
+    dirLight2.position.set( 0, 200, 100 );
+    dirLight2.castShadow = true;
+    dirLight2.shadow.camera.top = 180;
+    dirLight2.shadow.camera.bottom = - 100;
+    dirLight2.shadow.camera.left = - 120;
+    dirLight2.shadow.camera.right = 120;
+
+    postScene.add(dirLight2);
 
 }
 

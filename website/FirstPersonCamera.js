@@ -231,7 +231,7 @@ export class FirstPersonCamera{
             this._translation.add(up);
         }
     }
-    _updateRotation(delta){
+    _updateRotation(){
 
         // delta mouse 
         const xh = this._input._current.mouseXDelta / window.innerWidth;

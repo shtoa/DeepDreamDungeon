@@ -17,8 +17,6 @@ Hand Track Helper Class
 
 */
 
-
-
 // code developed myself based on code from: https://codepen.io/mediapipe-preview/pen/OJBVQJm
 export class FaceTrackHelper {
 

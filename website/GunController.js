@@ -377,7 +377,7 @@ export class GunController{
                     this.clearDestinationText()
 
                     
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 400).easing(TWEEN.Easing.Cubic.In).start();
+                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
                 }
 
                 // FIX ME: MAKE SAME LENGTH ANIMATION
@@ -387,6 +387,8 @@ export class GunController{
                     this.animationsMap["reloadArms"].stop();
                     this.animationsMap["flip"].stop();
                     this.ammoCount = 1;
+
+                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
                    
                 }
 
@@ -395,16 +397,18 @@ export class GunController{
                     this.animationsMap["reloadOrb"].stop();
                     this.animationsMap["flip"].stop();
                     this.ammoCount = 1;
+
+                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
               
                 }
 
                 if(e.action._clip.name == "arm|shootPortal"){
-                    this.animationsMap["shoot"].stop();
-                    this.animationsMap["shoot"].reset();
-                    this.animationsMap["flip"].stop();
+                    // this.animationsMap["shoot"].stop();
+                    // this.animationsMap["shoot"].reset();
+                    // this.animationsMap["flip"].stop();
 
 
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
+                    // new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
                     
                 }
 
@@ -418,7 +422,7 @@ export class GunController{
 
                     this.animationsMap["noAmmo"].reset().stop();
                     
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 400).easing(TWEEN.Easing.Cubic.In).start();
+                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
                 }
 
                 if(e.action._clip.name == "arm|charge"){
