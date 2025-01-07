@@ -481,12 +481,20 @@ export class GunController{
 
             
 
-            //#region familiar
-            this.familiarMesh = new THREE.Mesh(new THREE.SphereGeometry(0.007, 32, 16 ), new THREE.MeshPhongMaterial());
-            
-            //this.familiarMesh = scene.userData.faceMesh; // FIXME: DO PROPER ASYNC
+          
 
-            console.log(this.familiarMesh);
+    
+        });
+    
+    
+    }
+
+    initializeFamilliar(){
+          //#region familiar
+            //this.familiarMesh = new THREE.Mesh(new THREE.SphereGeometry(0.007, 32, 16 ), new THREE.MeshPhongMaterial());
+            
+             // FIXME: DO PROPER ASYNC
+            this.familiarMesh = scene.userData.faceMesh;
 
             this.familiarMesh.scale.set(0.05,0.05,0.05);
             this.familiarMesh.material.map = this.noAmmoTexture;
@@ -496,13 +504,15 @@ export class GunController{
             this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
             this.familiarMesh.userData.addTranslation = new THREE.Vector3(0,0,0);
 
-            new TWEEN.Tween(this.familiarMesh.userData.addTranslation)
-            .to({y:0.015}, 1000)
-            .yoyo(true)
-            .easing(TWEEN.Easing.Sinusoidal.InOut)
-            .repeat(Infinity)
-            .start()
+ 
 
+             new TWEEN.Tween(this.familiarMesh.userData.addTranslation)
+             .to({y:0.015}, 1000)
+             .yoyo(true)
+             .easing(TWEEN.Easing.Sinusoidal.InOut)
+             .repeat(Infinity)
+             .start()
+ 
 
        
 
@@ -536,20 +546,23 @@ export class GunController{
 
 
             //#endregion
-
-    
-        });
-    
-    
+        
     }
 
-    SuperSmoothLerp(x0, y0, yt, t, k)
+    SuperSmoothLerp(x0, y0, yt, t, k) // cite this 
 	{
 		var f = x0.clone().sub(y0).add(yt.clone().sub(y0).multiplyScalar(1 / (k * t)));
 		return yt.clone().sub(yt.clone().sub(y0).multiplyScalar(1 / (k * t))).add(f.clone().multiplyScalar(Math.exp(-k*t)));
 	}
 
     updateFamiliar(){
+
+        // move to initialize initialize Facemesh
+        if (this.familiarMesh != scene.userData.faceMesh){
+            console.log("post update famillair");
+            this.initializeFamilliar();
+            
+        } else {
         
         this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 
@@ -628,8 +641,6 @@ export class GunController{
         this.familiarMesh.material.map = this.noAmmoTexture;
         this.familiarMesh.material.map.needsUpdate = true;
         
-       
-
         this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur.clone().add(this.familiarMesh.userData.addTranslation));
 
         this.familiarMesh.lookAt(this._camera.position);
@@ -642,6 +653,7 @@ export class GunController{
         // this.familiarMesh.updateMatrix();
         // this.familiarMesh.updateWorldMatrix(true,true);
         // this.familiarMesh.updateMatrixWorld(true);
+        }
     }
 
 
@@ -696,7 +708,9 @@ export class GunController{
         //     this.animationsMap["walk"].stop();
         // }
 
-        this.updateFamiliar()
+        if(Object.hasOwn(scene.userData, "faceMesh")){
+            this.updateFamiliar()
+        }
 
        if(scene.userData.changingScene){
             this.updateDestinationText();
@@ -756,6 +770,8 @@ export class GunController{
 
      
         this.reticle.rotateZ(this.reticleRotationZ);
+
+        console.log(this.reticleRotationZ);
         
         TWEEN.update();
         if(this.portalTest){

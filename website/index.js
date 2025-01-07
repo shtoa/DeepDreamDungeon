@@ -90,7 +90,7 @@ const preload = async() =>{
 
 
 
-    await fLoader2.load("handMonster1.fbx", (object)=>{
+    await fLoader2.load("meshPlaneMonster2.fbx", (object)=>{
         
         themeTrackerCreature = object; 
 

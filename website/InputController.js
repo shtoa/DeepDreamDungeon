@@ -60,8 +60,6 @@ export class InputController{
             this._previous = {...this._current};
         } 
 
- 
-        // rerwrite this part w
         this._current.mouseXDelta = e.movementX / 2;
         this._current.mouseYDelta = e.movementY / 2;
         

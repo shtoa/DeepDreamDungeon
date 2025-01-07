@@ -10,8 +10,6 @@ Hand Track Helper Class
     1. Initialize Model;
     2. Initialize Video;
     3. Get Results;
-
-
 */
 
 // code developed myself based on code from: https://codepen.io/mediapipe-preview/pen/zYamdVd?editors=1010
