@@ -30,8 +30,13 @@ export class FirstPersonCamera{
         // - for vertical movement
         this._groundPosition = new THREE.Vector3(0,10,0);
         this._verticalVelocity = 0;
-        this._gravity = 5;
-        this._jumpHeight = 0.5;
+
+        //https://medium.com/@brazmogu/physics-for-game-dev-a-platformer-physics-cheatsheet-f34b09064558#:~:text=So%2C%20given%20a%20value%20g,the%20initial%20velocity%20v'%20is%E2%80%A6&text=Thus%2C%20v'%C2%B2%20%3D%202Hg,of%202%20*%20H%20*%20g.
+
+        this._jumpHeight = 25;
+        this._jumpDuration = 0.25;
+        this._gravity = this._jumpHeight / (2 * Math.pow(this._jumpDuration,2));
+     
         this._isGrounded = true; 
 
         this._lateralAcceleration = 500;
@@ -139,7 +144,7 @@ export class FirstPersonCamera{
 
         // add jump
         const up = new THREE.Vector3(0,1,0);
-        up.multiplyScalar(this._verticalVelocity);
+        up.multiplyScalar(this._verticalVelocity*delta);
 
         // get translation next frame
         var translationNextFrame = new THREE.Vector3().copy(this._translation);
@@ -155,7 +160,7 @@ export class FirstPersonCamera{
         // FIX ME: Check visual bug
 
         if(this._translation.y > this._groundPosition.y){
-            this._verticalVelocity -= this._gravity * delta;
+            this._verticalVelocity -= this._gravity*delta;
             
         } else {
             this._translation.y = this._groundPosition.y
