@@ -66,8 +66,8 @@ export class InputController{
             this._previous = {...this._current};
         } 
 
-        this._current.mouseXDelta = (this._current.mouseX-this._previous.mouseX) / 2;
-        this._current.mouseYDelta = (this._current.mouseY-this._previous.mouseY) / 2;
+        this._current.mouseXDelta = e.movementX / 2;
+        this._current.mouseYDelta = e.movementY / 2;
         
     }
 
@@ -82,7 +82,10 @@ export class InputController{
     _onTouchStart(e){
         this._isTouching = true;
         console.log("TOUCH STARTED");
-        console.log(e.touches[0]);
+        const touch = e.touches[0];
+
+        this._previous.mouseX = touch.pageX - window.innerWidth / 2;
+        this._previous.mouseY = touch.pageY - window.innerWidth / 2;
 
     }
 
@@ -95,12 +98,8 @@ export class InputController{
         this._current.mouseX = touch.pageX - window.innerWidth / 2;
         this._current.mouseY = touch.pageY - window.innerHeight / 2;
 
-        if(this._previous === null){
-            this._previous = {...this._current};
-        } 
-
-        this._current.mouseXDelta = touch.movementX / 2;
-        this._current.mouseYDelta = touch.movementY / 2;
+        this._current.mouseXDelta = this._current.mouseX - this._previous.mouseX;
+        this._current.mouseYDelta = this._current.mouseY - this._previous.mouseY;
 
     }
     _onTouchEnd(e){
