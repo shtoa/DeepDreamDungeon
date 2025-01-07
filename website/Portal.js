@@ -1,25 +1,21 @@
 // class for oneway Portal
 
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
+import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 import {scene, renderer} from './Index.js';
-import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
+import { TWEEN } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/libs/tween.module.min.js';
 
 export class Portal{
 
     constructor(playerCamera, secondPortalPos){
         
-        this._scene = scene;
-        this._renderer = renderer;
         this._playerCamera = playerCamera;
 
         // intialize renderTarget for the portal
-        this.renderTarget = new THREE.WebGLRenderTarget( 1024, 1024);
+        this.renderTarget = new THREE.WebGLRenderTarget( window.innerWidth,window.innerHeight);
         this.portalCamera = new THREE.PerspectiveCamera( this._playerCamera.fov, this._playerCamera.aspect, 1, 2000 ); // make sure to scale when resizing 
         
         this.portalGeom = new THREE.PlaneGeometry(40,40);
-
         this.normal;
-
         this.isOpen = false;
 
         // Used Tutorial to create Screen Space coords for portal shader https://discourse.threejs.org/t/getting-screen-coords-in-shadermaterial-shaders/23783/2
@@ -105,7 +101,7 @@ export class Portal{
                     portalMask: {value: scene.userData.portalMask}, // preload image in scene
                     renderTexture: {value: this.renderTarget.texture},
                     portalOpeningTime: {value: 0},
-                    time: {value: this._scene.userData.globalTime}
+                    time: {value: scene.userData.globalTime}
                 },
             
                 // Declare Vertex and Fragment Shader
@@ -122,7 +118,7 @@ export class Portal{
 
         //#endregion
 
-        document.addEventListener("resize", this.onWindowResize.bind(this));
+        window.addEventListener("resize", this.onWindowResize.bind(this), false);
 
         this._portal = new THREE.Mesh(this.portalGeom, this.portalMaterial);
 
@@ -134,7 +130,7 @@ export class Portal{
 
     _placePortal(hit, inPortalTransform){
         this._placePortalOnSurface(hit,inPortalTransform);
-        this._scene.add(this._portal);
+        scene.add(this._portal);
 
         new TWEEN.Tween(this.portalMaterial.uniforms.portalOpeningTime).to({value: 1},1000)
         .easing(TWEEN.Easing.Cubic.InOut)
@@ -202,7 +198,7 @@ export class Portal{
 
 
     _removePortal(){
-        this._scene.remove(this._portal); // figure out howt to fade out portal
+        scene.remove(this._portal); // figure out howt to fade out portal
      
     }
 
@@ -211,7 +207,7 @@ export class Portal{
         this._updatePortalCamera(); // update position and rotation of the camera based on the relative position of the current camera 
         this._renderPortal(); // render portal scene to the renderTarget
         TWEEN.update();
-        this.portalMaterial.uniforms.time.value = this._scene.userData.globalTime;
+        this.portalMaterial.uniforms.time.value = scene.userData.globalTime;
  
      }
 
@@ -234,13 +230,13 @@ export class Portal{
     _renderPortal(){
     
         // render the scene from the portal camera to the render texture
-        this._renderer.setRenderTarget(this.renderTarget); // set the renderTarget of the renderer to the portal render Target
+        renderer.setRenderTarget(this.renderTarget); // set the renderTarget of the renderer to the portal render Target
         this._portal.visible = false; // do not render the plane on which the portal will be in the portal scene (avoids recurssion [but can be later implemented])
-        this._renderer.render(this._scene, this.portalCamera); // render the other room to the render Target
+        renderer.render(scene, this.portalCamera); // render the other room to the render Target
         
         // reset the camera to render from the player camera
         this._portal.visible = true; // set the portal ba
-        this._renderer.setRenderTarget(null); // reset the renderer to render the scene from the main camera
+        renderer.setRenderTarget(null); // reset the renderer to render the scene from the main camera
         
         // set the new portal render target to the portal teture
         this.portalMaterial.uniforms.renderTexture.value = this.renderTarget.texture;
@@ -249,16 +245,16 @@ export class Portal{
 
 
     onWindowResize() {
-
+        this.renderTarget.setSize(window.innerWidth,window.innerHeight);
         this.portalCamera.aspect = window.innerWidth / window.innerHeight;
         this.portalCamera.updateProjectionMatrix();
+        this._renderPortal();
     }
 
 
     linkPortal(secondPortalPos){
         this.secondPortalPos = secondPortalPos;
     }
-
 
     _onCollision(){
         // Add teleportation logic here

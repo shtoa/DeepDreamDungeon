@@ -1,10 +1,7 @@
 // DEEP DREAM DUNGEON
 
-
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
-
 //import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
-
 
 import {HandTrackHelper} from "./handTrackHelper.js" 
 import {FirstPersonCamera} from "./FirstPersonCamera.js"
@@ -12,10 +9,9 @@ import {Room} from "./Room.js"
 
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
 
+import { excludeBones, includeBones } from './boneHelpers.js';
 
-
-import {Text} from 'https://cdn.jsdelivr.net/npm/troika-three-text@0.52.0/+esm';
-import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
+import { TWEEN } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/libs/tween.module.min.js';
 import { FaceTrackHelper } from './faceTrackHelper.js';
 
 var camera, scene, renderer
@@ -30,8 +26,6 @@ export {renderer, scene, actionList};
 const clock = new THREE.Clock();
 const gestureTimeoutClock = new THREE.Clock();
 
-// https://github.com/devinekask/creative-code-3-f24/blob/main/ml5/demos/03-handpose-vanilla-js.html
-
 var themes = [];
 var themeIndex = 0;
 
@@ -43,9 +37,7 @@ var borderSize = 40;
 
 var themeTrackerCreature;
 
-
 var uiAnimMixer;
-
 var borderCornerList = [];
 var themeLabelVertex, themeLabelFragment, themeLabelMaterial;
 
@@ -59,11 +51,10 @@ const preload = async() =>{
     faceHelper = new FaceTrackHelper();
     await faceHelper.createFaceLandmarker();
 
-    await fetch("/themes/themes.txt").then(res=> res.text()) // TODO: Move to backend
+    await fetch("/themes/themes.txt").then(res=> res.text()) // TODO: Move to backend'
     .then(text=>{
         themes = text.split(/\r\n|\n/);
     });
-
 
     var fLoader2 = await new FBXLoader();
     await fLoader2.load("borderCorner.fbx", (object)=>
@@ -113,7 +104,6 @@ const preload = async() =>{
 
         console.log(themeTrackerCreature.userData.IdleAnim)
 
-
         themeTrackerCreature.userData.TeleportAnim.clampWhenFinished = true;
         themeTrackerCreature.userData.TeleportAnim.loop = THREE.LoopOnce;
 
@@ -130,12 +120,6 @@ const preload = async() =>{
                 
                 var tracker = postScene.getObjectByName("themeTracker");
            
-                // if(e.action._clip.name = "Armature|idle.001"){
-                //     tracker.userData.IdleAnim.stop();
-                //     tracker.userData.TeleportAnim.reset().play();
-             
-                // }
-        
                 if(e.action._clip.name = "Armature|transition"){
                     tracker.userData.IdleAnim.loop = THREE.LoopRepeat;
                     tracker.userData.IdleHand.reset().play();
@@ -143,66 +127,14 @@ const preload = async() =>{
         
                 }
                 
-            
-        
-        
             });
         }
     })
     
     await setup();
 
-
-    
-   
 }
 
-function includeBones(action, filterBones){
-  // function by mjurczyk on https://discourse.threejs.org/t/animation-replace-blend-mode/51804
-  console.log(action);
-
-  const filteredBindings = [];
-  const filteredInterpolants = [];
-  const bindings = action._propertyBindings || [];
-  const interpolants = action._interpolants || [];
-
-  bindings.forEach((propertyMixer, index) => {
-    const { binding } = propertyMixer;
-
-
-
-    if ((binding && binding.node && !filterBones.includes(binding.node.name))) {
-      return;
-    } else {
-      filteredBindings.push(propertyMixer);
-      filteredInterpolants.push(interpolants[index]);
-
-    }
-    });
-
-  action._propertyBindings = filteredBindings;
-  action._interpolants = filteredInterpolants;
-}
-
-function excludeBones(action, exculdeBones){
-    // function by mjurczyk on https://discourse.threejs.org/t/animation-replace-blend-mode/51804
-    const filteredBindings = [];
-    const filteredInterpolants = [];
-    const bindings = action._propertyBindings || [];
-    const interpolants = action._interpolants || [];
-  
-    bindings.forEach((propertyMixer, index) => {
-      const { binding } = propertyMixer;
-  
-      if (!(binding &&  binding.node && exculdeBones.includes( binding.node.name))) {
-        filteredBindings.push(propertyMixer);
-        filteredInterpolants.push(interpolants[index]);
-      }
-    });
-  
-    action._propertyBindings = filteredBindings;
-    action._interpolants = filteredInterpolants;
-}
 
 
 const setup = async() =>{
@@ -219,10 +151,8 @@ var categories = [
     "Thumb_Up",
     "Thumb_Down",
 ]
-var categoriesMap = new Map();
+
 var rect;
-var themeLabel = new Text();
-var gestureLabel = new Text();
 var room;
 var room2;
 
@@ -233,15 +163,9 @@ var soundPlayer;
 var themeTracker;
 var inputTracker;
 
-var testMesh 
-
-var curThemeMesh;
-
-
 function init() {
     // https://annakap.medium.com/integrating-ml5-js-posenet-model-with-three-js-b19710e2862b
 
-   
     scene = new THREE.Scene();
     postScene = new THREE.Scene();
     scene.userData.portalMask = new THREE.TextureLoader().load("./portalMask.png");
@@ -249,16 +173,6 @@ function init() {
 
     inputTracker = document.getElementById("handInputs");
     
-
-    // curThemeMesh = new THREE.Mesh(
-    //     new THREE.PlaneGeometry( 1000, 100),
-    //     new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, transparent: true })
-    // );
-
-    // curThemeMesh.position.set(0,window.innerHeight/2 - 100,-1500);
-    // postScene.add(curThemeMesh);
-
-
     const container = document.createElement( 'div' );
     document.body.appendChild( container );
     container.id = "snuggle"
@@ -266,31 +180,19 @@ function init() {
     rect = document.getElementById("snuggle").getBoundingClientRect()
 
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.05, 500 );
-
  
     postCamera = new THREE.OrthographicCamera( -window.innerWidth/2-borderSize, window.innerWidth/2+borderSize, window.innerHeight/2+borderSize, -window.innerHeight/2-borderSize, 1, 3000 );
     postRenderTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight);
 
-    postRenderMesh = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth,window.innerHeight), new THREE.MeshPhongMaterial( ));
+    postRenderMesh = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth,window.innerHeight), basicTextureShader(postRenderTexture.texture));
     postRenderMesh.position.set(0,0,-1500)
 
- 
-
     postScene.add(postRenderMesh);
-
 
     const light = new THREE.AmbientLight(0xffffff,0.5); // soft white light
     postScene.add( light )
 
-    // testMesh = new THREE.Mesh( new THREE.BoxGeometry( 5, 5, 5 ), new THREE.MeshPhongMaterial( ) );
-    // testMesh.geometry.rotateX(Math.PI/4);
-    // testMesh.position.set(0,0,10);
-    
-
-
-
     postCamera.lookAt(postRenderMesh.position);
-
 
     const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
     hemiLight.position.set( 0, 600, 0 );
@@ -315,6 +217,7 @@ function init() {
 
     postScene.add(dirLight2);
 
+    //#region  borders
     // add border meshes 
 
     var borderBottom = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth+2*borderSize,4*borderSize), new THREE.MeshPhongMaterial({transparent: true}));
@@ -326,20 +229,16 @@ function init() {
 
     teethTexture.repeat.set(1,1);
 
-
- //   borderBottom.material.map = teethTexture
+    // borderBottom.material.map = teethTexture
 
     var borderTop = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth+2*borderSize,3*borderSize), new THREE.MeshPhongMaterial({transparent: true}));
     borderTop.position.set(0,window.innerHeight/2-borderSize/2,-1500)
     borderTop.rotateZ(Math.PI);
-   // borderTop.material.map = teethTexture;
+    // borderTop.material.map = teethTexture;
 
-
-  //  postScene.add(borderBottom);
-   // postScene.add(borderTop);
-
-
-    // scene.add( new THREE.CameraHelper( dirLight.shadow.camera ) );
+    // postScene.add(borderBottom);
+    // postScene.add(borderTop);
+    //#endregion borders
 
     var roomBounds = new THREE.Box3(new THREE.Vector3(0,0,0), new THREE.Vector3(400,100,200));
 
@@ -349,8 +248,6 @@ function init() {
 
     room = new Room(roomBounds, themes[themeIndex]);
 
-
-    // 400,110,0
     room2 = new Room(roomBounds.clone().translate(new THREE.Vector3(200,200,200)), themes[3]);
     curRoom = room;
     portalRoom = room2;
@@ -368,14 +265,8 @@ function init() {
         scene.userData.portalableSurfaces.push(surface);
     })
 
-
     scene.userData.curRoom = room;
     scene.userData.destinationRoom = room2;
-
-    // const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
-    // grid.material.opacity = 0.2;
-    // grid.material.transparent = true;
-    // scene.add( grid );
 
     var canvas = document.createElement('canvas');
     canvas.id = "mainCanvas"
@@ -400,35 +291,19 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize, false );
 
-
     // sound
-
     soundPlayer = new Tone.Player(`themes/${themes[themeIndex]}/sounds/${themes[themeIndex]}.wav`) //.toDestination();
     soundPlayer.autostart = true;
     soundPlayer.loop = true;
 
 
     // text labels
-
-
-
     updateGestureText("Gesture List: \n")
-
-    // var testMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 30, 30, 30 ), new THREE.MeshPhongMaterial( ) );
-    // testMesh.position.set(room._center.x, room._center.y, room._center.z);
-    // testMesh.geometry.rotateX(Math.PI/4);
-    // scene.add(testMesh);
-   
-
-    // testMesh.geometry.computeFaceNormals();
-    // room.surfaces.push(testMesh);
 
     createCurThemeTexture();
     initThemelabelShader();
 
-    console.log(postScene)
-
-
+    // Start the animation Loop
     animate();
 
 }
@@ -641,6 +516,7 @@ themeLabelFragment = `
 var curThemeCanvas, curThemeTexture
 
 function createCurThemeTexture(){
+      
       //#region destination text canvas
       curThemeCanvas = document.createElement("canvas")
       curThemeCanvas.id = "canvasDestination"
@@ -653,50 +529,28 @@ function createCurThemeTexture(){
 
       curThemeTexture = new THREE.CanvasTexture(curThemeCanvas);
 
-
-      
-
-      updateCurThemeTexture()
-
-    
+      updateCurThemeTexture();
 }
-
-
 
 document.addEventListener("teleport",(e)=>{
 
     var tracker = postScene.getObjectByName("themeTracker");
     tracker.userData.IdleHand.fadeOut(0.5);
     tracker.userData.TeleportAnim.fadeIn(0.5).reset().play(); // FIX ME : JUMPING ON TELEPORT BUG ON THE UI
-    
-
 
     if(postScene.getObjectByName("themeTracker")){
         var tracker = postScene.getObjectByName("themeTracker");
-      
-      
-
-     
- 
 
         new TWEEN.Tween(themeLabelMaterial.uniforms.rollTime).to({value:1},1000).easing(TWEEN.Easing.Sinusoidal.InOut).start().onComplete(()=>{
             updateCurThemeTexture();
             themeLabelMaterial.uniforms.themeTexture.value.needsUpdate = true;
             new TWEEN.Tween(themeLabelMaterial.uniforms.rollTime).to({value:0},1000).easing(TWEEN.Easing.Sinusoidal.InOut).start()
 
-
-         
-            
         })
 
     }
-    
- 
 
 });
-
-
-
 
 function updateCurThemeTexture(){
 
@@ -711,7 +565,6 @@ function updateCurThemeTexture(){
     // scale text if its too long
     if(textWidth > curThemeCanvas.width){
 
-
         ctx.font = `${ (curThemeCanvas.width / textWidth)* 70}px Comic Sans MS`;
         ctx.lineWidth = (curThemeCanvas.width / textWidth)*3; 
         textWidth = ctx.measureText(curThemeText).width;
@@ -724,37 +577,19 @@ function updateCurThemeTexture(){
     ctx.fillText(curThemeText, (curThemeCanvas.width/2) - (textWidth/2), (curThemeCanvas.height/2)+25);
     //ctx.strokeText(curThemeText, (curThemeCanvas.width/2) - (textWidth/2), (curThemeCanvas.height/2)+25);
 
-               
- 
-   
     if(postScene.getObjectByName("themeTracker")){
         var tracker = postScene.getObjectByName("themeTracker");
         if(tracker.getObjectByName("themePlane").material != themeLabelMaterial){
             tracker.getObjectByName("themePlane").material = themeLabelMaterial;
             themeLabelMaterial.uniforms.themeTexture.value = curThemeTexture;
             themeLabelMaterial.uniforms.themeTexture.value.needsUpdate = true
- 
-
         }
-
-
-     
     }
-   
-
 }
 
 var fpsCamera;
 
 function updateGestureText(text){
-
-    gestureLabel.text = text;
-    gestureLabel.fontSize = 8;
-    gestureLabel.outlineWidth = "10%";
-    gestureLabel.position.set(-100,100,0);
-    gestureLabel.textAlign = "left";
-    gestureLabel.anchorX = "left";
-    gestureLabel.sync();
 
     // inputTracker.innerHTML = text;
 
@@ -763,7 +598,8 @@ function updateGestureText(text){
 var teleportToIndex;
 
 function actionsToText(listOfActions){
-    updateGestureText("")
+    
+    updateGestureText("");
     var text = "Gesture List: <br><ul>";
     teleportToIndex = 0;
 
@@ -774,24 +610,17 @@ function actionsToText(listOfActions){
 
     updateGestureText(text);
 
-
-    //scene.userData.destinationTheme = themes[teleportToIndex];
-
 }
-
-
 
 function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
     renderer.setPixelRatio(window.devicePixelRatio)
 
-
     postRenderTexture.setSize(window.innerWidth,window.innerHeight);
 
     camera.updateProjectionMatrix();
 
-    // Fix ME: just update the geometry
     postRenderMesh.geometry = new THREE.PlaneGeometry(window.innerWidth, window.innerHeight);
 
     postCamera.left = -window.innerWidth/2-borderSize;
@@ -809,74 +638,54 @@ function onWindowResize() {
             (i > 1 ? -1 : 1)*(-window.innerWidth/2+13-borderSize),
             ((i == 1 || i ==  2)  ? -1 : 1)*(window.innerHeight/2-13+borderSize),-1300
         );
-
-
     }
-                  
-     
-    //renderer.setSize(camera.aspect*500, 500);
+
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-//
-preload();
+function basicTextureShader(texture) {
 
-var avgPos;
+    // code from https://stackoverflow.com/questions/71584030/rendertarget-as-new-texture-returns-only-a-black-and-white-texture
+    // create basic shader material as 
 
-var curAnim = {
-    name: "None",
-    action: categoriesMap["None"]
-}
-
-var prevAnim = {
-    name: "None",
-    action: categoriesMap["None"]
-}
-
-let mousePos = {
-    x:0,
-    y:0,
-    z:0
-}
-
-const raycaster = new THREE.Raycaster();
-
-
-var plane;
-
-
-
-window.addEventListener("pointerdown",(e)=>{
-    // if(camera != null){
-    //     plane = new THREE.Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(), 
-    //         new THREE.Vector3(0,0,0)
-    //     )
-   
-
-    // //console.log(window)
-    // mousePos.x = (-1 + 2 * (e.clientX) / (window.innerWidth));
-    // mousePos.y = (1 + 2 * (-e.clientY) / (window.innerHeight));
-
-    // raycaster.setFromCamera( mousePos, camera );
-    
-    // var intersectPos = new THREE.Vector3();
-    // raycaster.ray.intersectPlane(plane,intersectPos);
-
-    // //console.log(intersectPos);
-    // }
-})
-
+    const Vertex = `
+      varying vec2 vUv;
+      void main() {
+          vUv = uv;
+          vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * modelViewPosition;
+      }`;
+  
+    const Fragment = `
+  
+      uniform sampler2D tex;
+      varying vec2 vUv;
+      void main() {
+          vec4 color = texture2D(tex, vUv);
+          gl_FragColor = color;
+      }`;
+  
+    const uniforms = {
+      tex: {
+        value: texture
+      }
+    };
+  
+    return new THREE.ShaderMaterial({
+      uniforms: uniforms,
+      vertexShader: Vertex,
+      fragmentShader: Fragment,
+    });
+  
+  }
 
 var actionList = [];
 var isGestureTimeOut = false;
 var gestureTimeOut = 1;
 
-
-
 // var unMappedActionsList = ["None", "Open_Palm", "Closed_Fist", "Pointing_Up", "Pointing_Down"]
 
 var unMappedActionsList = ["Open", "None"]
-
 var addedMeshToScene = false;
 
 function animate() {
@@ -885,13 +694,6 @@ function animate() {
 
     if(faceHelper.mesh && !addedMeshToScene){
         scene.userData.faceMesh = faceHelper.mesh
-        // faceHelper.mesh.position.set(-500,0,-1000);
-        // faceHelper.mesh.scale.set(500,500,500);
-    
-        // faceHelper.mesh.rotateX(Math.PI)
-        //faceHelper.mesh.rotateZ(Math.PI)
-       
-        console.log(faceHelper.mesh);
         addedMeshToScene = true;
     }
 
@@ -900,19 +702,14 @@ function animate() {
     scene.userData.globalDelta = delta;
     scene.userData.globalTime = clock.getElapsedTime();
 
-    //controls.update()
-
     if(uiAnimMixer){
         uiAnimMixer.update(scene.userData.globalDelta);
-
-        
         themeLabelMaterial.uniforms.time.value = clock.getElapsedTime(); // FIX ME MOVE SOMEWHERE ELSE
     }
+    
     TWEEN.update();
     themeLabelMaterial.uniforms.rollTime.needsUpdate = true;
 
-   
-    // handHelper.getPose()
     faceHelper.getFaceLandmarks().then(() => {
 
         if(gestureTimeoutClock.getElapsedTime() > gestureTimeOut){
@@ -922,11 +719,6 @@ function animate() {
         }
 
         if (scene.userData.changingScene && !isGestureTimeOut){
-        
-
-      
-
-            //var action = handHelper.getPose()
 
             faceHelper.getFaceLandmarks().then((action)=>{
             
@@ -940,23 +732,12 @@ function animate() {
                     actionsToText(actionList);
                 } 
                 
-                // when to process 
-                // if(action == "Open_Palm"){
-                //     processIndex(actionList);
-                //     updateGestureText(`Teleported to: \n ${themes[themeIndex]}`);
-                // }
-                
                 if (!actionList.includes(action) && !unMappedActionsList.includes(action)){
                     actionList.push(action);
                     isGestureTimeOut = true;
                     gestureTimeoutClock.start();
                     actionsToText(actionList);
                 } 
-
-                
-
-
-              
 
             }
 
@@ -965,19 +746,12 @@ function animate() {
             var totalIndex = 0;
             if (actionList.length > 0){
             actionList.forEach((action)=>{
-
                 totalIndex += faceToBinary[action] //gestureToBinary[action];
             })
             }   
-            scene.userData.destinationTheme = themes[totalIndex];
-
-
-      
-
+                scene.userData.destinationTheme = themes[totalIndex];
             })
-            
         }
-
     })
 
     fpsCamera.update(delta);
@@ -990,8 +764,8 @@ function animate() {
     renderer.setRenderTarget(null); 
 
     // do post processing pass
-    postRenderMesh.material.map = postRenderTexture;
-    postRenderMesh.material.map.needsUpdate = true;
+    postRenderMesh.material.uniforms.tex.value = postRenderTexture.texture;
+    postRenderMesh.material.uniforms.tex.needsUpdate = true;
 
     renderer.render(postScene, postCamera);
 
@@ -1000,15 +774,12 @@ function animate() {
 
 document.addEventListener("fire",()=>{processIndex(actionList);});
 
-// add confirm
-
 var gestureToBinary = {
     "Thumb_Up": 1,
     "Thumb_Down": 2,
     "Victory": 4,
     "ILoveYou": 8,
 }
-
 
 var faceToBinary = {
     "Kiss": 1,
@@ -1033,28 +804,16 @@ async function processIndex(actionList){
 
     themeIndex = totalIndex;
 
-
-    //var curTheme = `Current Theme: ${themes[themeIndex]}!`;
-
-   
-
-    //themeTracker.innerHTML = curTheme;
-
-   
-
     scene.userData.destinationRoom.updateTheme(themes[themeIndex])
-
-
 
     // add listner to update
     // soundPlayer.load(`themes/${themes[themeIndex]}/sounds/${themes[themeIndex]}.wav`);
-
-
 
     actionList.length = 0;
 
     scene.userData.changingScene = false;
     teleportToIndex=0;
 }
-       
 
+// begin script execution
+preload();

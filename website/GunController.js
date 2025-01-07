@@ -1,7 +1,8 @@
 import { inputController } from "./FirstPersonCamera.js";
 import { Portal } from "./Portal.js";
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
-import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
+//import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
+import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js'; // check if there was reason to use older version
+import { TWEEN } from 'https://unpkg.com/three@0.128.0/examples/jsm/libs/tween.module.min.js';
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
 import {scene, actionList} from './Index.js'
 
@@ -46,7 +47,6 @@ export class GunController{
         this.canvasDestination.height = 100;
     
         context.font = "70px Comic Sans MS";
-
       
         this.destTexture = new THREE.CanvasTexture(this.canvasDestination);
       
@@ -71,12 +71,9 @@ export class GunController{
         this.destNameUI.material.map = this.destTexture;
 
        // scene.add(this.destNameUI);
-
         
         scene.add(this.reticle);
         this.reticle.material.map = new THREE.TextureLoader().load( `playerIcon.png`);
-
-
 
         //#endregion
         
@@ -110,14 +107,6 @@ export class GunController{
 
         document.addEventListener("fire", ()=>{
 
-            // if(!this.firingAnim?.isPlaying()){
-            //     this.firingAnim = new TWEEN.Tween(this.gunModel.rotation).to({x:1},200).yoyo(true)
-            //     .repeat(1)
-            //     .easing(TWEEN.Easing.Cubic.InOut)
-            //     .start()
-            //     this.gunModel.updateMatrix();
-            //     scene.userData.changingScene = true;
-            // }
 
             this.mixer.stopAllAction();
             this.animationsMap["shoot"].play();
@@ -273,8 +262,6 @@ export class GunController{
                 this.wordRing.scale.set(0.0002,0.0002,0.0002);
                 this.wordRing.material = new THREE.MeshPhongMaterial( {transparent: true});
                 
-                
-                
                 this.wordRing.getObjectByName("Circle").material.transparent = true;
                 this.wordRing.getObjectByName("Circle").material.map = this.destTexture;
                 this.wordRing.getObjectByName("Circle").material.map.needsUpdate = true;
@@ -289,16 +276,11 @@ export class GunController{
     loadGunModel(){
         var fLoader = new FBXLoader();
 
-
-  
-    
         fLoader.load("handTest3.fbx", (object)=>
         {
     
             object.position.set(0.02,-0.02,-0.09)
             
-         
-
             var scale = 0.0002;
             object.scale.set(scale,scale,scale);
       
@@ -306,8 +288,6 @@ export class GunController{
            
             this.gunModel = object;
     
-       
-
             this.gunModel.getObjectByName("cameraOrb").material = this.orbMaterial ;
 
             console.log(object.animations);
@@ -361,14 +341,9 @@ export class GunController{
 
 
             // this.animationsMap["walk"].blendMode = THREE.AdditiveAnimationBlendMode;
-        
-
-
             // this.animationsMap["walk"].setDuration(1.5);
 
-            this.isSpinning = false;
-
-            
+            this.isSpinning = false;   
             this.gunModel.getObjectByName("chargingEffect").material = this.gunChargeEffectMat;
 
             this.mixer.timeScale = 1.5; // set timescale to help with speed of animation
@@ -475,13 +450,6 @@ export class GunController{
             object.parent = this._camera;
 
             this._camera.add(object); // check this line
-
-
-
-
-            
-
-          
 
     
         });
@@ -621,22 +589,11 @@ export class GunController{
 
         this.familiarMesh.userData.positions.target.copy(newTarget); 
 
-    
-
-
-
        // this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.0001);
        // this.familiarMesh.userData.relativePos = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur);
-
-
-
-
-
-        //new TWEEN.Tween(this.familiarMesh.userData.positions.cur).to({x: this.familiarMesh.userData.positions.target.x, y: this.familiarMesh.userData.positions.target.y, z: this.familiarMesh.userData.positions.target.z},10);
+       //new TWEEN.Tween(this.familiarMesh.userData.positions.cur).to({x: this.familiarMesh.userData.positions.target.x, y: this.familiarMesh.userData.positions.target.y, z: this.familiarMesh.userData.positions.target.z},10);
       
-
         //console.log(this.familiarMesh.userData.positions.target);
-
 
         this.familiarMesh.material.map = this.noAmmoTexture;
         this.familiarMesh.material.map.needsUpdate = true;
@@ -645,10 +602,8 @@ export class GunController{
 
         this.familiarMesh.lookAt(this._camera.position);
      
-
         this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 
-        
         
         // this.familiarMesh.updateMatrix();
         // this.familiarMesh.updateWorldMatrix(true,true);
@@ -771,8 +726,6 @@ export class GunController{
      
         this.reticle.rotateZ(this.reticleRotationZ);
 
-        console.log(this.reticleRotationZ);
-        
         TWEEN.update();
         if(this.portalTest){
             this.portalTest._updatePortal();
@@ -947,7 +900,8 @@ export class GunController{
 
         this.portalNormal = normal;
 
-        rotation.lookAt(eye, position, THREE.Object3D.DEFAULT_UP);
+        console.log(THREE.Object3D.DefaultUp)
+        rotation.lookAt(eye, position, THREE.Object3D.DefaultUp); // default_up
 
         const euler = new THREE.Euler();
         euler.setFromRotationMatrix(rotation);
@@ -956,7 +910,6 @@ export class GunController{
             this.portalTest._removePortal(); // clean up previous portal if it exist
         }
 
-        
 
         this.portalTest = new Portal(this._camera); // create entry portal
         this.portalTest.normal = normal;
@@ -967,11 +920,11 @@ export class GunController{
 
         newPortal.position.copy(hits[0].point) 
                 
-        const n = normal.clone();
+        var n = normal.clone();
         n.transformDirection(hits[0].object.matrixWorld);
         n.add(newPortal.position);
 
-        newPortal.up.copy(wDir.multiplyScalar((normal.clone().dot(THREE.Object3D.DEFAULT_UP))).add(THREE.Object3D.DEFAULT_UP)) /// redo this research how rto do projection
+        newPortal.up.copy(wDir.multiplyScalar((normal.clone().dot(THREE.Object3D.DefaultUp))).add(THREE.Object3D.DefaultUp)) /// redo this research how rto do projection // THREE.Object3D.DefaultUp
         newPortal.lookAt(n);
         const hit = hits[0]
         

@@ -1,5 +1,5 @@
 import {InputController} from "./InputController.js"
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
+import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
 import { GunController} from "./GunController.js";
 import { scene } from "./Index.js";
@@ -10,7 +10,7 @@ export {inputController}
 var inputController;
 
 export class FirstPersonCamera{
-    constructor(camera, curRoom, destinationRoom){
+    constructor(camera){
         
         this._camera = camera;
         this._input = new InputController();

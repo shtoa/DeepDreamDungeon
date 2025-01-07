@@ -3,7 +3,7 @@ import {
     FaceLandmarker, FilesetResolver
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
+import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
 import { FACES, UVS } from "./faceMeshData.js";
 

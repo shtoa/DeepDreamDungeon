@@ -1,6 +1,4 @@
-
-
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
+import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
 export class Room {
 
@@ -92,13 +90,11 @@ export class Room {
        
         var floor = new THREE.Mesh( gm, new THREE.MeshPhongMaterial( ) );
       
-    
         floor.position.set(this._center.x, this._center.y - (this._size.y/2), this._center.z);
         floor.receiveShadow = true;
         floor.material.map = new THREE.TextureLoader().load( `themes/${this._curTheme}/textures/floor.png`);
         floor.material.needsUpdate = true;
       
-
         return floor
     }
 
