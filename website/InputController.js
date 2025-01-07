@@ -1,3 +1,5 @@
+import { renderer } from "./main.js";
+
 // code created by following tutorial by SimonDev: https://www.youtube.com/watch?v=oqKzxPMLWxo&ab_channel=SimonDev
 export class InputController{
     constructor(){
@@ -24,9 +26,9 @@ export class InputController{
         document.addEventListener('mousemove', (e)=> this._onMouseMove(e), false);
         document.addEventListener('keydown', (e)=> this._onKeyDown(e), false);
         document.addEventListener('keyup', (e)=> this._onKeyUp(e), false);
-        document.addEventListener('touchstart', (e)=> this._onTouchStart(e), false);
-        document.addEventListener('touchmove', (e)=> this._onTouchStart(e), false);
-        document.addEventListener('touchend', (e)=> this._onTouchEnd(e), false);
+        renderer.domElement.addEventListener('touchstart', (e)=> this._onTouchStart(e), false);
+        renderer.domElement.addEventListener('touchmove', (e)=> this._onTouchStart(e), false);
+        renderer.domElement.addEventListener('touchend', (e)=> this._onTouchEnd(e), false);
 
     }
 
@@ -79,10 +81,14 @@ export class InputController{
 
     _onTouchStart(e){
         this._isTouching = true;
+        console.log("TOUCH STARTED");
+        console.log(e.touches[0]);
 
     }
 
     _onTouchMove(e){
+
+        console.log("TOUCH MOVED");
 
         const touch = e.touches[0];
         
@@ -98,7 +104,7 @@ export class InputController{
 
     }
     _onTouchEnd(e){
-
+        console.log("TOUCH ENDED");
     }
 
 
