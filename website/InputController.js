@@ -27,7 +27,7 @@ export class InputController{
         document.addEventListener('keydown', (e)=> this._onKeyDown(e), false);
         document.addEventListener('keyup', (e)=> this._onKeyUp(e), false);
         document.getElementById("mainCanvas").addEventListener('touchstart', (e)=> this._onTouchStart(e), false);
-        document.getElementById("mainCanvas").addEventListener('touchmove', (e)=> this._onTouchStart(e), false);
+        document.getElementById("mainCanvas").addEventListener('touchmove', (e)=> this._onTouchMove(e), false);
         document.getElementById("mainCanvas").addEventListener('touchend', (e)=> this._onTouchEnd(e), false);
 
     }
@@ -80,6 +80,7 @@ export class InputController{
     }
 
     _onTouchStart(e){
+        e.preventDefault();
         this._isTouching = true;
         console.log("TOUCH STARTED");
         const touch = e.touches[0];
@@ -90,6 +91,7 @@ export class InputController{
     }
 
     _onTouchMove(e){
+        e.preventDefault();
 
         console.log("TOUCH MOVED");
 
@@ -103,6 +105,7 @@ export class InputController{
 
     }
     _onTouchEnd(e){
+        e.preventDefault();
         console.log("TOUCH ENDED");
     }
 
