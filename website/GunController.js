@@ -10,29 +10,6 @@ import {scene, actionList} from './main.js'
 
 //https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API
 
-
-// works only on chrome and safari find alternatives
-
-// const SpeechRecognition =
-// window.SpeechRecognition || window.webkitSpeechRecognition;
-// const SpeechGrammarList =
-// window.SpeechGrammarList || window.webkitSpeechGrammarList;
-// const SpeechRecognitionEvent =
-// window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
-
-// const recognition = new SpeechRecognition();
-// const speechRecognitionList = new SpeechGrammarList();
-
-// recognition.onresult = (event) => {
-//     const res = event.results[0][0].transcript;
-//     console.log(res)
-//     console.log(`Confidence: ${event.results[0][0].confidence}`);
-//   };
-
-//   recognition.onspeechend = () => {
-//     recognition.stop();
-//   };
-
 export class GunController{
     
     constructor(camera, FPSController){

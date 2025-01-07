@@ -26,9 +26,9 @@ export class InputController{
         document.addEventListener('mousemove', (e)=> this._onMouseMove(e), false);
         document.addEventListener('keydown', (e)=> this._onKeyDown(e), false);
         document.addEventListener('keyup', (e)=> this._onKeyUp(e), false);
-        renderer.domElement.addEventListener('touchstart', (e)=> this._onTouchStart(e), false);
-        renderer.domElement.addEventListener('touchmove', (e)=> this._onTouchStart(e), false);
-        renderer.domElement.addEventListener('touchend', (e)=> this._onTouchEnd(e), false);
+        document.getElementById("mainCanvas").addEventListener('touchstart', (e)=> this._onTouchStart(e), false);
+        document.getElementById("mainCanvas").addEventListener('touchmove', (e)=> this._onTouchStart(e), false);
+        document.getElementById("mainCanvas").addEventListener('touchend', (e)=> this._onTouchEnd(e), false);
 
     }
 

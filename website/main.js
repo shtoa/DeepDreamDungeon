@@ -155,7 +155,7 @@ function init() {
     
     const container = document.createElement( 'div' );
     document.body.appendChild( container );
-    container.id = "snuggle"
+    container.id = "container"
 
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.05, 500 );
  
