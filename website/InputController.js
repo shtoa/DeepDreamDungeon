@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 import { Joystick } from './joystick.js';
+import { Button } from './button.js';
 
 // code created by following tutorial by SimonDev: https://www.youtube.com/watch?v=oqKzxPMLWxo&ab_channel=SimonDev
 export class InputController{
@@ -47,12 +48,22 @@ export class InputController{
         this.lookingJoystick = new Joystick({left:"80%", right:"0%", bottom: "10%", top:"60%"});
         this.movementJoystick = new Joystick({left:"10%", right:"0%", bottom: "10%", top:"60%"});
 
+
+        this.shootButton = new Button({left:"75%", right:"0%", bottom: "10%", top:"57.5%"}, "shoot");
+        this.reloadButton = new Button({left:"75%", right:"0%", bottom: "10%", top:"77.5%"}, "reload");
+        this.spinButton = new Button({left:"72.5%", right:"0%", bottom: "10%", top:"67.5%"}, "spinGun");
+
     }  
 
     _updateTouchControls(){
         this._moveDir.copy(this.movementJoystick.joyStickDelta);
         this._current.mouseYDelta = this.lookingJoystick.joyStickDelta.y*3;
         this._current.mouseXDelta = this.lookingJoystick.joyStickDelta.x*3;
+
+
+        this._current.leftButton = this.shootButton.isPressed;
+        this._keys["82"] = this.reloadButton.isPressed;
+        this._keys["70"] = this.spinButton.isPressed;
     }
 
     _onMouseDown(e){
