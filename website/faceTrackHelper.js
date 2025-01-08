@@ -29,6 +29,8 @@ export class FaceTrackHelper {
         // FIX ME: Remove or Add to this
         if(document.getElementById('video') !== null){
             this.video = document.getElementById('video');
+            this.video.muted = true;
+            this.video.play();
         }
 
         this.expressionsToRecognize = new Map();
