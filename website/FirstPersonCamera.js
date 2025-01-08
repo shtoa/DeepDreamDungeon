@@ -119,8 +119,8 @@ export class FirstPersonCamera{
             forwardV = ((this._input._keys["87"] ? 1 : 0) + (this._input._keys["83"] ? -1 : 0));
             strafeV = ((this._input._keys["65"] ? 1 : 0) + (this._input._keys["68"] ? -1 : 0));
         } else {
-            forwardV =  scene.userData.joyStickDelta.y;
-            strafeV =  scene.userData.joyStickDelta.x;
+            forwardV =  -1*this._input._moveDir.y;
+            strafeV =  -1*this._input._moveDir.x;
         }
 
         var movementDir = new THREE.Vector2(forwardV, strafeV).normalize();
