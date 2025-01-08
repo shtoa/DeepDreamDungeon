@@ -107,6 +107,8 @@ export class FaceTrackHelper {
         this.video.setAttribute('height', 250);
         this.video.autoplay = true;
         this.video.setAttribute("muted", true)
+        this.video.setAttribute("controls", true)
+        this.video.setAttribute("playsInline", true)
     
 
         await document.body.appendChild(this.video)
