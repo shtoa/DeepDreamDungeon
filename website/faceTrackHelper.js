@@ -25,14 +25,16 @@ export class FaceTrackHelper {
     video;
     
 
+
     constructor(){
-        // FIX ME: Remove or Add to this
+
         if(document.getElementById('video') !== null){
             this.video = document.getElementById('video');
             this.video.muted = true;
             this.video.play();
         }
 
+      
         this.expressionsToRecognize = new Map();
 
         // different expressions 
@@ -98,24 +100,32 @@ export class FaceTrackHelper {
 
     async initVideo(){
 
+        console.log("INITIALIZE VIDEO");
         this.video = await document.createElement('video')
         this.video.id = "video";
         this.video.setAttribute('width', 250);
         this.video.setAttribute('height', 250);
         this.video.autoplay = true;
+        this.video.setAttribute("muted", true)
+    
 
         await document.body.appendChild(this.video)
+
         
 
         // enable video stream
         await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         .then((stream) => {
             this.video.srcObject = stream;
+
+
         }).catch((err) => {
             console.log("An error occurred! " + err);
         });
 
         this.video.hidden = true;
+        
+
 
     }
 

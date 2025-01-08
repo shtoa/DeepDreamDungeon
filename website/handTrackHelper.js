@@ -48,6 +48,7 @@ export class HandTrackHelper {
         this.video.setAttribute('width', 250);
         this.video.setAttribute('height', 250);
         this.video.autoplay = true;
+        this.video.setAttribute("muted", true)
 
         await document.body.appendChild(this.video)
         

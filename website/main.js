@@ -49,12 +49,8 @@ var inputTracker;
 
 const preload = async() =>{
 
-    handHelper = new HandTrackHelper();
-    await handHelper.initVideo();
-    await handHelper.createGestureRecognizer();
-
-
     faceHelper = new FaceTrackHelper();
+    await faceHelper.initVideo();
     await faceHelper.createFaceLandmarker();
 
     await fetch("themes/themes.txt").then(res=> res.text()) // TODO: Move to backend'
