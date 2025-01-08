@@ -109,6 +109,8 @@ export class FaceTrackHelper {
         this.video.setAttribute("muted", true)
         this.video.setAttribute("controls", true)
         this.video.setAttribute("playsInline", true)
+        this.video.setAttribute("hidden", true)
+        this.video.hidden = true;
     
 
         await document.body.appendChild(this.video)
@@ -125,7 +127,7 @@ export class FaceTrackHelper {
             console.log("An error occurred! " + err);
         });
 
-        this.video.hidden = true;
+  
         
 
 
