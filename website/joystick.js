@@ -13,7 +13,7 @@ export class Joystick{
         this.restJoystickPosition = new THREE.Vector2(this.defaultJoystickBr.x, this.defaultJoystickBr.y);
         this.newJoystickPosition = this.restJoystickPosition.clone();
         this.joyStickDelta = new THREE.Vector2(0,0);
-        this.touchID = 0;
+        this.touchID = null;
 
        this.addTouchListeners();
 
@@ -21,7 +21,7 @@ export class Joystick{
 
     addTouchListeners(){
         // touch move when the joystick is moving
-        this.joyStick.addEventListener("touchstart", (e) => {this.onTouchStart(e)},false)
+        //this.joyStick.addEventListener("touchstart", (e) => {this.onTouchStart(e)},false)
         // touch move when the joystick is moving
         this.joyStick.addEventListener("touchmove", (e) => {this.onTouchMove(e)},false)
         // touch end whn the joystick is stopped interacting with 
@@ -33,17 +33,22 @@ export class Joystick{
     
             this.newJoystickPosition.copy(this.restJoystickPosition.clone());
             this.joyStickDelta.copy(new THREE.Vector2(0,0));
+
+            this.touchID = null;
     
         }, false)    
     }
     
-    onTouchStart(e){
-        if(e.changedTouches){
-            this.touchID = e.changedTouches[0].identifier;
-        }
-    }
+    // onTouchStart(e){
+       
+    // }
 
     onTouchMove(e){
+
+        if(e.changedTouches && this.touchID === null){
+            console.log("new Touch")
+            this.touchID = e.changedTouches[0].identifier;
+        }
 
         e.preventDefault();
 
