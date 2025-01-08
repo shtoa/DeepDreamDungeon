@@ -38,22 +38,38 @@ export class Joystick{
 
         e.preventDefault();
         var singleTouch = e.touches[0];
+
+        console.log(e.touches)
+
       //  console.log(br.left);
-        var center = new THREE.Vector2(50,50);
-        var dest = new THREE.Vector2(singleTouch.clientX- this.defaultJoystickBr.left+25, this.defaultJoystickBr.bottom-singleTouch.clientY+25);
 
-        if(center.distanceTo(dest) < 50){
-            this.joyStick.style.left = String(dest.x)+"px"; // 125
-            this.joyStick.style.bottom = String(dest.y)+"px";
-        } else {
 
-            dest.sub(center).normalize().multiplyScalar(50);
-            this.joyStick.style.left = String(dest.x+50)+"px"; // 125
-            this.joyStick.style.bottom = String(dest.y+50)+"px";
+        for(var i = 0; i < e.touches.length; i++) {
+
+            var touch = e.touches[i]
+
+            var center = new THREE.Vector2(50,50);
+            var dest = new THREE.Vector2(touch.clientX- this.defaultJoystickBr.left+25, this.defaultJoystickBr.bottom-touch.clientY+25);
+    
+           // console.log(document.elementFromPoint(singleTouch.clientX,singleTouch.clientY));
+
+            if(document.elementFromPoint(touch.clientX,touch.clientY) == this.joyStick){
+            if(center.distanceTo(dest) < 50){
+                this.joyStick.style.left = String(dest.x)+"px"; // 125
+                this.joyStick.style.bottom = String(dest.y)+"px";
+            } else {
+
+                dest.sub(center).normalize().multiplyScalar(50);
+                this.joyStick.style.left = String(dest.x+50)+"px"; // 125
+                this.joyStick.style.bottom = String(dest.y+50)+"px";
+            }
+
+            this.newJoystickPosition = new THREE.Vector2(this.joyStick.getBoundingClientRect().x, this.joyStick.getBoundingClientRect().y);
+            this.joyStickDelta = this.newJoystickPosition.clone().sub(this.restJoystickPosition).normalize();
+            
         }
-
-        this.newJoystickPosition = new THREE.Vector2(this.joyStick.getBoundingClientRect().x, this.joyStick.getBoundingClientRect().y);
-        this.joyStickDelta = this.newJoystickPosition.clone().sub(this.restJoystickPosition).normalize();
+        }
+    
 
     }
 
