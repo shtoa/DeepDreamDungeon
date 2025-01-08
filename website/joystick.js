@@ -38,7 +38,9 @@ export class Joystick{
     }
     
     onTouchStart(e){
-        this.touchID = e.touches[e.touches.length-1].identifier;
+        if(e.changedTouches){
+            this.touchID = e.changedTouches[0].identifier;
+        }
     }
 
     onTouchMove(e){
