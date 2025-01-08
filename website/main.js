@@ -295,7 +295,7 @@ function initializeJoystick(){
     scene.userData.defaultJoystickBr = document.getElementById("joystickHead").getBoundingClientRect();
 
     joyStickHead.addEventListener("touchmove", (e)=>{
-
+        e.preventDefault();
         var singleTouch = e.touches[0];
       //  console.log(br.left);
         var center = new THREE.Vector2(50,50);
@@ -306,7 +306,7 @@ function initializeJoystick(){
              document.getElementById("joystickHead").style.bottom = String(dest.y)+"px";
         } else {
 
-            dest.normalize().multiplyScalar(50);
+            dest.sub(center).normalize().multiplyScalar(50);
             console.log(dest);
             document.getElementById("joystickHead").style.left = String(dest.x+50)+"px"; // 125
             document.getElementById("joystickHead").style.bottom = String(dest.y+50)+"px";
@@ -319,6 +319,7 @@ function initializeJoystick(){
     })
 
     joyStickHead.addEventListener("touchend", (e)=>{
+        e.preventDefault();
 
         document.getElementById("joystickHead").style.left = "50px"
         document.getElementById("joystickHead").style.bottom = "50px"
