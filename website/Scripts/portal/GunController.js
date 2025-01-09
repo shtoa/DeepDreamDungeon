@@ -54,12 +54,14 @@ export class GunController{
         var wDir = new THREE.Vector3();
         this._camera.getWorldDirection(wDir);
 
-        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
+        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.21)))
         this.reticle.lookAt(this._camera.position);
 
         this.loadGunModel();
+       
 
         this.isSpinning = false;
+        this.teleporting = false;
 
         this._fireEvent = new Event("fire");
         document.addEventListener("fire", this._placePortal.bind(this)); // research about this
@@ -159,6 +161,7 @@ export class GunController{
             uniformsNeedUpdate: true  
         
         } );
+        this.orbTween = new TWEEN.Tween(this.orbMaterial.uniforms.ammoTime)
 
         //#region 
 
@@ -216,11 +219,10 @@ export class GunController{
             {
                 this.wordRing = object;
 
-
                 var wDir = new THREE.Vector3();
                 this._camera.getWorldDirection(wDir);
 
-                this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
+                this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.21)))
                 this.wordRing.lookAt(this._camera.position);
                 this.wordRing.scale.set(0.0002,0.0002,0.0002);
                 this.wordRing.material = new THREE.MeshPhongMaterial( {transparent: true});
@@ -250,6 +252,7 @@ export class GunController{
             scene.add(object)
            
             this.gunModel = object;
+            this.chargeTween = new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale);
     
             this.gunModel.getObjectByName("cameraOrb").material = this.orbMaterial ;
 
@@ -323,7 +326,7 @@ export class GunController{
                     this.clearDestinationText()
 
                     
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
+                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
                 }
 
                 // FIX ME: MAKE SAME LENGTH ANIMATION
@@ -334,7 +337,7 @@ export class GunController{
                     this.animationsMap["flip"].stop();
                     this.ammoCount = 1;
 
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
+                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
                    
                 }
 
@@ -344,7 +347,7 @@ export class GunController{
                     this.animationsMap["flip"].stop();
                     this.ammoCount = 1;
 
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
+                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
               
                 }
 
@@ -358,7 +361,7 @@ export class GunController{
 
                     this.animationsMap["noAmmo"].reset().stop();
                     
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
+                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
                 }
 
                 if(e.action._clip.name == "arm|charge"){
@@ -367,13 +370,12 @@ export class GunController{
                     scene.userData.changingScene = true;
 
 
-                    new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:20,y:20,z:20}, 1000).easing(TWEEN.Easing.Cubic.In).start();
-
-
+                    if(!this.chargeTween.isPlaying()){
+                        this.chargeTween.to({x:20,y:20,z:20}, 1000).easing(TWEEN.Easing.Cubic.In).start();
+                    }
                     
-                }
-
-
+                    
+                } 
             })
 
             this.gunModel.children.forEach(child => {
@@ -384,9 +386,9 @@ export class GunController{
 
        
             this.gunModel.frustumCulled = false;
-    
-            object.parent = this._camera;
 
+            object.parent = this._camera;
+            
             this._camera.add(object); // check this line
 
     
@@ -420,7 +422,6 @@ export class GunController{
              .start()
         
             scene.add(this.familiarMesh);
-            //this.familiarMesh.position.copy(this.gunModel.getObjectByName("Familiar").position)
 
             this.familiarMesh.userData.positions = {
                 cur: new THREE.Vector3(),
@@ -430,29 +431,39 @@ export class GunController{
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.cur);
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.target);
 
-            //this.gunModel.getObjectByName("Familiar").add(this.familiarMesh)
-            //this.familiarMesh.position.copy(this.gunModel.position.clone().add(this.gunModel.getObjectByName("Familiar").position))
-
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.position);
 
             this.familiarMesh.updateMatrix();
             this.familiarMesh.updateWorldMatrix(true,true);
             this.familiarMesh.updateMatrixWorld(true);
 
-            // console.log(this.familiarMesh.position);
-            // console.log(this.gunModel.getObjectByName("Familiar").position);
-
             //#endregion
+
+            document.addEventListener("teleport",(e)=>{
+                this.teleporting = true;
+                
+                //this.updateFamiliar();
+                this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.target);
+                this.familiarMesh.userData.positions.target = this.familiarMesh.userData.positions.target.clone().sub(scene.userData._preTeleportDeltaTranslate);
+                this.familiarMesh.userData.positions.cur = this.familiarMesh.userData.positions.target.clone().add(this.familiarMesh.userData.relativePos);
+               
+                this.teleporting = false;
+            });
+        
         
     }
 
     updateFamiliar(){
         
+
+
         // move to initialize initialize Facemesh
-        if(Object.hasOwn(scene.userData,"faceMesh") && this.gunModel){
+        if(Object.hasOwn(scene.userData,"faceMesh") && this.gunModel && !this.teleporting){
             if (this.familiarMesh != scene.userData.faceMesh){
                 this.initializeFamilliar();    
             } else {
+
+          
             
             this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 
@@ -460,11 +471,6 @@ export class GunController{
 
             var newTarget = new THREE.Vector3();
             this.gunModel.getObjectByName("Familiar").getWorldPosition(newTarget);
-
-
-            var distanceTo = this.familiarMesh.userData.positions.cur.distanceTo(newTarget);
-            var distanceToOldTarget = this.familiarMesh.userData.positions.cur.distanceTo(this.familiarMesh.userData.positions.target);
-
 
             var distanceBetween = newTarget.distanceTo(this.familiarMesh.userData.positions.target);
 
@@ -478,7 +484,6 @@ export class GunController{
             this.familiarMesh.userData.relativePos = this.familiarMesh.userData.velocity.clone().multiplyScalar(scene.userData.globalDelta).add(this.familiarMesh.userData.relativePos).clampLength(0,0.03); // use delta time?
 
             this.familiarMesh.userData.relativePos = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), 0.1)
-
             this.familiarMesh.userData.positions.cur = newTarget.clone().add(this.familiarMesh.userData.relativePos);
 
             // var toNewTargetNorm = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
@@ -510,10 +515,12 @@ export class GunController{
             // this.familiarMesh.updateMatrix();
             // this.familiarMesh.updateWorldMatrix(true,true);
             // this.familiarMesh.updateMatrixWorld(true);
+
             }
         }
     }
 
+    
 
     updateDestinationText(){
         var destinationText = scene.userData.destinationTheme;
@@ -527,7 +534,6 @@ export class GunController{
     
         // scale text if its too long
         if(textWidth > this.canvasDestination.width){
-    
     
             ctx.font = `${ (this.canvasDestination.width / textWidth)* 70}px Comic Sans MS`;
             ctx.lineWidth = (this.canvasDestination.width / textWidth)*3; 
@@ -568,18 +574,18 @@ export class GunController{
         var wDir = new THREE.Vector3();
         this._camera.getWorldDirection(wDir);
 
-        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
+        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.21)))
         this.reticle.lookAt(this._camera.position);
 
         if(this.wordRing){
-            this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
+            this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.21)))
             this.wordRing.lookAt(this._camera.position);
             this.wordRing.scale.set(0.0002,0.0002,0.0002);
         }
 
         if(this.ammoCount == 0){
             if(!this.isTransitioning && this.orbMaterial.uniforms.ammoTime.value != 1){
-                new TWEEN.Tween(this.orbMaterial.uniforms.ammoTime).to({value: 1},1000)
+                this.orbTween.to({value: 1},1000)
                 .easing(TWEEN.Easing.Cubic.InOut)
                 .start().onComplete(()=>{this.isTransitioning = false})
 
@@ -588,7 +594,7 @@ export class GunController{
 
         } else {
             if(!this.isTransitioning && this.orbMaterial.uniforms.ammoTime.value != 0){
-                new TWEEN.Tween(this.orbMaterial.uniforms.ammoTime).to({value: 0},500)
+                this.orbTween.to({value: 0},500)
                 .easing(TWEEN.Easing.Cubic.InOut)
                 .start().onComplete(()=>{this.isTransitioning = false})
 

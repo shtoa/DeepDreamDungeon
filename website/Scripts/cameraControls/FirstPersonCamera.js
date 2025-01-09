@@ -53,6 +53,7 @@ export class FirstPersonCamera{
 
         this.GunController = new GunController(camera, this);
         this.teleportEvent = new Event("teleport");
+        this._preTeleportDeltaTranslate = new THREE.Vector3(0,0,0); // for handling translation during teleport
 
     }
 
@@ -222,11 +223,17 @@ export class FirstPersonCamera{
                     scene.userData.destinationRoom = scene.userData.curRoom;
                     scene.userData.curRoom = newRoom;
 
-                    document.dispatchEvent(this.teleportEvent);
-
+                    scene.userData._preTeleportDeltaTranslate = translationNextFrame.clone().sub(this._translation);
+                    
                     // fix player translation 
                     this._translation = scene.userData.inPortal.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation));
                     this._groundPosition = new THREE.Vector3(0,scene.userData.curRoom.bounds.min.y+10,0); // set new ground position
+
+                    // Update Camera
+                    this._updateRotation();
+                    this._updateCamera();
+
+                    document.dispatchEvent(this.teleportEvent);
 
                 } 
             } else {
