@@ -83,7 +83,7 @@ const preload = async() =>{
 
 
 
-    await fLoader2.load("meshPlaneMonster2.fbx", (object)=>{
+    await fLoader2.load("themeTrackerMonster.fbx", (object)=>{
         
         themeTrackerCreature = object; 
 
@@ -104,8 +104,6 @@ const preload = async() =>{
         includeBones(themeTrackerCreature.userData.TeleportAnim, ["handLeft"])
         includeBones(themeTrackerCreature.userData.IdleHand, ["handLeft"])
 
-        console.log(themeTrackerCreature.userData.IdleAnim)
-
         themeTrackerCreature.userData.TeleportAnim.clampWhenFinished = true;
         themeTrackerCreature.userData.TeleportAnim.loop = THREE.LoopOnce;
 
@@ -114,10 +112,8 @@ const preload = async() =>{
 
         postScene.add(themeTrackerCreature);
 
-        console.log(themeTrackerCreature);
-
         if(uiAnimMixer){
-            console.log("LOADED MIXER")
+
             uiAnimMixer.addEventListener("finished",(e)=>{
                 
                 var tracker = postScene.getObjectByName("themeTracker");
@@ -180,14 +176,6 @@ function init() {
 
     var borderBottom = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth+2*borderSize,4*borderSize), new THREE.MeshPhongMaterial({transparent: true}));
     borderBottom.position.set(0,-window.innerHeight/2+borderSize/2,-1500)
-
-    var teethTexture = new THREE.TextureLoader().load("teeth.png");
-    teethTexture.wrapS = THREE.RepeatWrapping;
-    teethTexture.wrapT = THREE.ClampToEdgeWrapping;
-
-    teethTexture.repeat.set(1,1);
-
-    // borderBottom.material.map = teethTexture
 
     var borderTop = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth+2*borderSize,3*borderSize), new THREE.MeshPhongMaterial({transparent: true}));
     borderTop.position.set(0,window.innerHeight/2-borderSize/2,-1500)
@@ -464,7 +452,7 @@ themeLabelFragment = `
     }
     `;
     
-    var themeAlphaTex = new THREE.TextureLoader().load("alphaTestBanner.png");
+    var themeAlphaTex = new THREE.TextureLoader().load("bannerAlpha.png");
     themeAlphaTex.minFilter = THREE.NearestFilter;
     themeAlphaTex.magFilter = THREE.NearestFilter
 
@@ -779,7 +767,6 @@ async function processIndex(actionList){
     if(totalIndex > themes.length){
         totalIndex = themes.length-1;
     } 
-    console.log(totalIndex);
 
     themeIndex = totalIndex;
 

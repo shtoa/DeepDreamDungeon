@@ -108,7 +108,7 @@ export class Joystick{
 
         // joystick
         this.joyStick = document.createElement("img");
-        this.joyStick.src = "./sad.png";
+        this.joyStick.src = "./outOfAmmo.png";
         this.joyStick.width = 50;
         this.joyStick.height = 50;
         this.joyStick.style.left ="50px"

@@ -48,7 +48,7 @@ export class FaceTrackHelper {
     
         this.initializedMesh = false;
         this.mesh;
-        this.faceMeshTexture = new THREE.TextureLoader().load("sad.png");
+        this.faceMeshTexture = new THREE.TextureLoader().load("outOfAmmo.png");
         this.dummyList = [];
 
         this.blendShapesToRecognize = new Map([
@@ -229,7 +229,6 @@ export class FaceTrackHelper {
             
             if(result.faceLandmarks.length > 0){
                 if(!this.initializedMesh){
-                    console.log(result.faceLandmarks);
                     this.createFaceMesh(result.faceLandmarks[0]);
                     this.initializedMesh = true;
                 } else {

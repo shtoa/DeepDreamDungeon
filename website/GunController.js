@@ -50,7 +50,7 @@ export class GunController{
        // scene.add(this.destNameUI);
         
         scene.add(this.reticle);
-        this.reticle.material.map = new THREE.TextureLoader().load( `playerIcon.png`);
+        this.reticle.material.map = new THREE.TextureLoader().load( `crosshair.png`);
 
         //#endregion
         
@@ -97,7 +97,7 @@ export class GunController{
         this.isCharged = false;
 
 
-        this.noAmmoTexture = new THREE.TextureLoader().load("sad.png");
+        this.noAmmoTexture = new THREE.TextureLoader().load("outOfAmmo.png");
 
         const video = document.getElementById( 'video' );
         this.videoTexture = new THREE.VideoTexture( video )
@@ -158,7 +158,7 @@ export class GunController{
             // Add a mask to give portal and elliptical shape
             uniforms: {
                 videoTexture: {value: this.videoTexture},
-                noAmmoTexture: {value: new THREE.TextureLoader().load("sad.png")},    
+                noAmmoTexture: {value: new THREE.TextureLoader().load("outOfAmmo.png")},    
                 ammoTime: {value: 0}
             },
         
@@ -253,9 +253,9 @@ export class GunController{
     loadGunModel(){
         var fLoader = new FBXLoader();
 
-        fLoader.load("handTest3.fbx", (object)=>
+        fLoader.load("playerHands.fbx", (object)=>
         {
-    
+
             object.position.set(0.02,-0.02,-0.09)
             
             var scale = 0.0002;
@@ -267,36 +267,28 @@ export class GunController{
     
             this.gunModel.getObjectByName("cameraOrb").material = this.orbMaterial ;
 
-            console.log(object.animations);
-
-
             this.mixer = new THREE.AnimationMixer( object );
             this.animationsMap["flip"] = this.mixer.clipAction( object.animations[ 7 ] );
             this.animationsMap["flip"].loop = THREE.LoopOnce;
 
-
             this.animationsMap["startFlip"] = this.mixer.clipAction( object.animations[ 0 ] );
             this.animationsMap["startFlip"].clampWhenFinished = true;
             this.animationsMap["startFlip"].loop = THREE.LoopOnce;
-
 
             this.animationsMap["stopFlip"] = this.mixer.clipAction( object.animations[ 5 ] );
             this.animationsMap["stopFlip"].clampWhenFinished = true;
             this.animationsMap["stopFlip"].loop = THREE.LoopOnce;
             this.animationsMap["stopFlip"].setDuration(0.4);
 
-
             this.animationsMap["shoot"] = this.mixer.clipAction( object.animations[ 8 ] );
             this.animationsMap["shoot"].clampWhenFinished = true;
             this.animationsMap["shoot"].loop = THREE.LoopOnce;
         
-
             this.animationsMap["reloadArms"] = this.mixer.clipAction( object.animations[ 2 ] );
             this.animationsMap["reloadArms"].clampWhenFinished = true;
             this.animationsMap["reloadArms"].loop = THREE.LoopOnce;
             this.animationsMap["reloadArms"].setDuration(1.3);
 
-            
             this.animationsMap["reloadOrb"] = this.mixer.clipAction( object.animations[ 4 ] );
             this.animationsMap["reloadOrb"].clampWhenFinished = true;
             this.animationsMap["reloadOrb"].loop = THREE.LoopOnce;
@@ -311,14 +303,6 @@ export class GunController{
             this.animationsMap["noAmmo"].clampWhenFinished = true;
             this.animationsMap["noAmmo"].loop = THREE.LoopOnce;
             this.animationsMap["noAmmo"].setDuration(1.5);
-
-            // this.animationsMap["walk"] = this.mixer.clipAction( object.animations[ 1 ] ); //THREE.AnimationUtils.makeClipAdditive(
-            // this.animationsMap["walk"].clampWhenFinished = true;
-            // this.animationsMap["walk"].loop = THREE.Repeat;
-
-
-            // this.animationsMap["walk"].blendMode = THREE.AdditiveAnimationBlendMode;
-            // this.animationsMap["walk"].setDuration(1.5);
 
             this.isSpinning = false;   
             this.gunModel.getObjectByName("chargingEffect").material = this.gunChargeEffectMat;
@@ -341,7 +325,6 @@ export class GunController{
                 if(e.action._clip.name == "arm|spinStop"){
                     this.animationsMap["stopFlip"].stop();
                     //this.animationsMap["flip"].stop();
-
                     this.isSpinning = false;
                 }
 
@@ -379,16 +362,6 @@ export class GunController{
               
                 }
 
-                if(e.action._clip.name == "arm|shootPortal"){
-                    // this.animationsMap["shoot"].stop();
-                    // this.animationsMap["shoot"].reset();
-                    // this.animationsMap["flip"].stop();
-
-
-                    // new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale).to({x:1,y:1,z:1}, 100).easing(TWEEN.Easing.Cubic.In).start();
-                    
-                }
-
                 if(e.action._clip.name == "arm|spin"){
               
                     this.animationsMap["stopFlip"].play();
@@ -416,8 +389,6 @@ export class GunController{
 
 
             })
-
-            console.log(this.gunModel)
 
             this.gunModel.children.forEach(child => {
                     child.renderOrder = -1
@@ -498,97 +469,91 @@ export class GunController{
         
     }
 
-    SuperSmoothLerp(x0, y0, yt, t, k) // cite this 
-	{
-		var f = x0.clone().sub(y0).add(yt.clone().sub(y0).multiplyScalar(1 / (k * t)));
-		return yt.clone().sub(yt.clone().sub(y0).multiplyScalar(1 / (k * t))).add(f.clone().multiplyScalar(Math.exp(-k*t)));
-	}
-
     updateFamiliar(){
-
+        
         // move to initialize initialize Facemesh
-        if (this.familiarMesh != scene.userData.faceMesh){
-            console.log("post update famillair");
-            this.initializeFamilliar();
+        if(Object.hasOwn(scene.userData,"faceMesh")){
+            if (this.familiarMesh != scene.userData.faceMesh){
+                this.initializeFamilliar();    
+            } else {
             
-        } else {
+            this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
+
         
-        this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 
-       
+            //this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.1);
 
-        //this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.1);
-
-        var newTarget = new THREE.Vector3();
-        this.gunModel.getObjectByName("Familiar").getWorldPosition(newTarget);
+            var newTarget = new THREE.Vector3();
+            this.gunModel.getObjectByName("Familiar").getWorldPosition(newTarget);
 
 
-        var distanceTo = this.familiarMesh.userData.positions.cur.distanceTo(newTarget);
-        var distanceToOldTarget = this.familiarMesh.userData.positions.cur.distanceTo(this.familiarMesh.userData.positions.target);
+            var distanceTo = this.familiarMesh.userData.positions.cur.distanceTo(newTarget);
+            var distanceToOldTarget = this.familiarMesh.userData.positions.cur.distanceTo(this.familiarMesh.userData.positions.target);
 
 
-        var distanceBetween = newTarget.distanceTo(this.familiarMesh.userData.positions.target);
+            var distanceBetween = newTarget.distanceTo(this.familiarMesh.userData.positions.target);
 
 
-     
-        //this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
-
-  
-        var toTargetNorm = newTarget.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
-        this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
-      
-     
-        //this.familiarMesh.userData.velocity = this.familiarMesh.userData.velocity.clone().add(toTargetNorm.clone().multiplyScalar(-0.2));
-        this.familiarMesh.userData.velocity = toTargetNorm.clone().multiplyScalar(-0.1).multiplyScalar(distanceBetween);
         
-        
+            //this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
+
     
-        //console.log(new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), this.familiarMesh.userData.relativePos.length()));
-
-        this.familiarMesh.userData.relativePos = this.familiarMesh.userData.velocity.clone().multiplyScalar(scene.userData.globalDelta).add(this.familiarMesh.userData.relativePos).clampLength(0,0.03); // use delta time?
-
-
-        // this.familiarMesh.userData.relativePos.length()
-        this.familiarMesh.userData.relativePos = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), 0.1)
-
-        this.familiarMesh.userData.positions.cur = newTarget.clone().add(this.familiarMesh.userData.relativePos);
-
-        // var toNewTargetNorm = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
-        // if(distanceTo > distanceToOldTarget){
-        //     this.familiarMesh.userData.positions.cur = newTarget.clone().sub(toTargetNorm.clone().multiplyScalar(0.05));
-        // }
+            var toTargetNorm = newTarget.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
+            this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
         
-        // if(distanceTo >= 0.05){
-        //     //this.familiarMesh.userData.positions.cur = newTarget.clone().sub(toTargetNorm.clone().multiplyScalar(0.05));
-
-
-        //     this.familiarMesh.userData.positions.cur = newTarget;
-
-        // }
-
-        //this.familiarMesh.userData.positions.cur = this.SuperSmoothLerp(this.familiarMesh.userData.positions.cur,this.familiarMesh.userData.positions.target,newTarget,scene.userData.globalDelta, 0.8);
-
-        this.familiarMesh.userData.positions.target.copy(newTarget); 
-
-       // this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.0001);
-       // this.familiarMesh.userData.relativePos = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur);
-       //new TWEEN.Tween(this.familiarMesh.userData.positions.cur).to({x: this.familiarMesh.userData.positions.target.x, y: this.familiarMesh.userData.positions.target.y, z: this.familiarMesh.userData.positions.target.z},10);
-      
-        //console.log(this.familiarMesh.userData.positions.target);
-
-        this.familiarMesh.material.map = this.noAmmoTexture;
-        this.familiarMesh.material.map.needsUpdate = true;
         
-        this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur.clone().add(this.familiarMesh.userData.addTranslation));
-
-        this.familiarMesh.lookAt(this._camera.position);
-     
-        this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
-
+            //this.familiarMesh.userData.velocity = this.familiarMesh.userData.velocity.clone().add(toTargetNorm.clone().multiplyScalar(-0.2));
+            this.familiarMesh.userData.velocity = toTargetNorm.clone().multiplyScalar(-0.1).multiplyScalar(distanceBetween);
+            
+            
         
-        // this.familiarMesh.updateMatrix();
-        // this.familiarMesh.updateWorldMatrix(true,true);
-        // this.familiarMesh.updateMatrixWorld(true);
+            //console.log(new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), this.familiarMesh.userData.relativePos.length()));
+
+            this.familiarMesh.userData.relativePos = this.familiarMesh.userData.velocity.clone().multiplyScalar(scene.userData.globalDelta).add(this.familiarMesh.userData.relativePos).clampLength(0,0.03); // use delta time?
+
+
+            // this.familiarMesh.userData.relativePos.length()
+            this.familiarMesh.userData.relativePos = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), 0.1)
+
+            this.familiarMesh.userData.positions.cur = newTarget.clone().add(this.familiarMesh.userData.relativePos);
+
+            // var toNewTargetNorm = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
+            // if(distanceTo > distanceToOldTarget){
+            //     this.familiarMesh.userData.positions.cur = newTarget.clone().sub(toTargetNorm.clone().multiplyScalar(0.05));
+            // }
+            
+            // if(distanceTo >= 0.05){
+            //     //this.familiarMesh.userData.positions.cur = newTarget.clone().sub(toTargetNorm.clone().multiplyScalar(0.05));
+
+
+            //     this.familiarMesh.userData.positions.cur = newTarget;
+
+            // }
+
+            //this.familiarMesh.userData.positions.cur = this.SuperSmoothLerp(this.familiarMesh.userData.positions.cur,this.familiarMesh.userData.positions.target,newTarget,scene.userData.globalDelta, 0.8);
+
+            this.familiarMesh.userData.positions.target.copy(newTarget); 
+
+        // this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.0001);
+        // this.familiarMesh.userData.relativePos = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur);
+        //new TWEEN.Tween(this.familiarMesh.userData.positions.cur).to({x: this.familiarMesh.userData.positions.target.x, y: this.familiarMesh.userData.positions.target.y, z: this.familiarMesh.userData.positions.target.z},10);
+        
+            //console.log(this.familiarMesh.userData.positions.target);
+
+            this.familiarMesh.material.map = this.noAmmoTexture;
+            this.familiarMesh.material.map.needsUpdate = true;
+            
+            this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur.clone().add(this.familiarMesh.userData.addTranslation));
+
+            this.familiarMesh.lookAt(this._camera.position);
+        
+            this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
+
+            
+            // this.familiarMesh.updateMatrix();
+            // this.familiarMesh.updateWorldMatrix(true,true);
+            // this.familiarMesh.updateMatrixWorld(true);
+            }
         }
     }
 
@@ -881,7 +846,6 @@ export class GunController{
 
         this.portalNormal = normal;
 
-        console.log(THREE.Object3D.DefaultUp)
         rotation.lookAt(eye, position, THREE.Object3D.DefaultUp); // default_up
 
         const euler = new THREE.Euler();
@@ -890,7 +854,6 @@ export class GunController{
         if(this.portalTest){
             this.portalTest._removePortal(); // clean up previous portal if it exist
         }
-
 
         this.portalTest = new Portal(this._camera); // create entry portal
         this.portalTest.normal = normal;
