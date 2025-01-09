@@ -1,14 +1,12 @@
-import { inputController } from "./FirstPersonCamera.js";
-import { Portal } from "./Portal.js";
-//import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js'; // check if there was reason to use older version
 import { TWEEN } from 'https://unpkg.com/three@0.128.0/examples/jsm/libs/tween.module.min.js';
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
-import {scene, actionList} from './main.js'
+
+import { inputController } from "../cameraControls/FirstPersonCamera.js";
+import { Portal } from "./Portal.js";
+import {scene, actionList} from './../../main.js'
 
 // FIX ME USE STATE MACHINE FOR ANIMATIONS
-
-//https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API
 
 export class GunController{
     
@@ -50,7 +48,7 @@ export class GunController{
        // scene.add(this.destNameUI);
         
         scene.add(this.reticle);
-        this.reticle.material.map = new THREE.TextureLoader().load( `crosshair.png`);
+        this.reticle.material.map = new THREE.TextureLoader().load( `/Assets/Images/crosshair.png`);
 
         //#endregion
         
@@ -97,7 +95,7 @@ export class GunController{
         this.isCharged = false;
 
 
-        this.noAmmoTexture = new THREE.TextureLoader().load("outOfAmmo.png");
+        this.noAmmoTexture = new THREE.TextureLoader().load("/Assets/Models/player/outOfAmmo.png");
 
         const video = document.getElementById( 'video' );
         this.videoTexture = new THREE.VideoTexture( video )
@@ -158,7 +156,7 @@ export class GunController{
             // Add a mask to give portal and elliptical shape
             uniforms: {
                 videoTexture: {value: this.videoTexture},
-                noAmmoTexture: {value: new THREE.TextureLoader().load("outOfAmmo.png")},    
+                noAmmoTexture: {value: new THREE.TextureLoader().load("/Assets/Models/player/outOfAmmo.png")},    
                 ammoTime: {value: 0}
             },
         
@@ -226,7 +224,7 @@ export class GunController{
      
         // reticle text
         var fLoader2 = new FBXLoader();
-        fLoader2.load("wordRing.fbx", (object)=>
+        fLoader2.load("/Assets/Models/player/wordRing.fbx", (object)=>
             {
                 this.wordRing = object;
 
@@ -253,7 +251,7 @@ export class GunController{
     loadGunModel(){
         var fLoader = new FBXLoader();
 
-        fLoader.load("playerHands.fbx", (object)=>
+        fLoader.load("/Assets/Models/player/playerHands.fbx", (object)=>
         {
 
             object.position.set(0.02,-0.02,-0.09)
@@ -432,13 +430,6 @@ export class GunController{
              .easing(TWEEN.Easing.Sinusoidal.InOut)
              .repeat(Infinity)
              .start()
- 
-
-       
-
-            //    .easing(TWEEN.Easing.Cubic.InOut)
- 
-            
         
             scene.add(this.familiarMesh);
             //this.familiarMesh.position.copy(this.gunModel.getObjectByName("Familiar").position)
@@ -452,7 +443,6 @@ export class GunController{
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.target);
 
             //this.gunModel.getObjectByName("Familiar").add(this.familiarMesh)
-
             //this.familiarMesh.position.copy(this.gunModel.position.clone().add(this.gunModel.getObjectByName("Familiar").position))
 
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.position);
@@ -463,7 +453,6 @@ export class GunController{
 
             // console.log(this.familiarMesh.position);
             // console.log(this.gunModel.getObjectByName("Familiar").position);
-
 
             //#endregion
         
@@ -479,8 +468,6 @@ export class GunController{
             
             this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 
-        
-
             //this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.1);
 
             var newTarget = new THREE.Vector3();
@@ -493,26 +480,15 @@ export class GunController{
 
             var distanceBetween = newTarget.distanceTo(this.familiarMesh.userData.positions.target);
 
-
-        
             //this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
 
-    
             var toTargetNorm = newTarget.clone().sub(this.familiarMesh.userData.positions.cur).normalize();
             this.familiarMesh.userData.velocity = new THREE.Vector3(0,0,0);
         
-        
             //this.familiarMesh.userData.velocity = this.familiarMesh.userData.velocity.clone().add(toTargetNorm.clone().multiplyScalar(-0.2));
             this.familiarMesh.userData.velocity = toTargetNorm.clone().multiplyScalar(-0.1).multiplyScalar(distanceBetween);
-            
-            
-        
-            //console.log(new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), this.familiarMesh.userData.relativePos.length()));
-
             this.familiarMesh.userData.relativePos = this.familiarMesh.userData.velocity.clone().multiplyScalar(scene.userData.globalDelta).add(this.familiarMesh.userData.relativePos).clampLength(0,0.03); // use delta time?
 
-
-            // this.familiarMesh.userData.relativePos.length()
             this.familiarMesh.userData.relativePos = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.relativePos, new THREE.Vector3(0,0,0), 0.1)
 
             this.familiarMesh.userData.positions.cur = newTarget.clone().add(this.familiarMesh.userData.relativePos);
@@ -534,12 +510,6 @@ export class GunController{
 
             this.familiarMesh.userData.positions.target.copy(newTarget); 
 
-        // this.familiarMesh.userData.positions.cur = new THREE.Vector3().lerpVectors(this.familiarMesh.userData.positions.cur, this.familiarMesh.userData.positions.target, 0.0001);
-        // this.familiarMesh.userData.relativePos = this.familiarMesh.userData.positions.target.clone().sub(this.familiarMesh.userData.positions.cur);
-        //new TWEEN.Tween(this.familiarMesh.userData.positions.cur).to({x: this.familiarMesh.userData.positions.target.x, y: this.familiarMesh.userData.positions.target.y, z: this.familiarMesh.userData.positions.target.z},10);
-        
-            //console.log(this.familiarMesh.userData.positions.target);
-
             this.familiarMesh.material.map = this.noAmmoTexture;
             this.familiarMesh.material.map.needsUpdate = true;
             
@@ -549,7 +519,6 @@ export class GunController{
         
             this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 
-            
             // this.familiarMesh.updateMatrix();
             // this.familiarMesh.updateWorldMatrix(true,true);
             // this.familiarMesh.updateMatrixWorld(true);

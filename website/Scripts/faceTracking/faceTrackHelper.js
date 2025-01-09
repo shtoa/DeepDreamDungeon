@@ -48,7 +48,7 @@ export class FaceTrackHelper {
     
         this.initializedMesh = false;
         this.mesh;
-        this.faceMeshTexture = new THREE.TextureLoader().load("outOfAmmo.png");
+        this.faceMeshTexture = new THREE.TextureLoader().load("./Assets/Models/face/scaryMask.png");
         this.dummyList = [];
 
         this.blendShapesToRecognize = new Map([
@@ -62,18 +62,7 @@ export class FaceTrackHelper {
             ["mouthPressRight", 0]
         ])
 
-
-        this.targetExpressions = [
-            "jawOpen",
-            "mouthSmileLeft",
-            "mouthSmileRight",
-            "mouthFrownLeft",
-            "mouthFrownRight",
-            "mouthPucker",
-            "mouthPressLeft",
-            "mouthPressRight"
-
-        ]
+        this.targetExpressions = Array.from(this.blendShapesToRecognize.keys());
 
     }
 
@@ -151,12 +140,7 @@ export class FaceTrackHelper {
         await geometry.computeVertexNormals();
         geometry.getAttribute("uv").needsUpdate = true;
 
-        //const mesh = new THREE.Mesh( geometry, material );
-
-
         const mesh = new THREE.InstancedMesh( geometry, material,10);
-
-        
 
        // inspired by https://www.youtube.com/watch?v=dKg5H1OtDK8&ab_channel=WaelYasmina
         for(let i=0; i<10; i++){
@@ -171,37 +155,22 @@ export class FaceTrackHelper {
             dummy.rotateZ(Math.PI);
             dummy.rotateY(Math.PI);
 
-        
-
-   
             //dummy.position.copy(new THREE.Vector3(0,0,0));
             dummy.rotateY(i*2*Math.PI/10);
             //dummy.rotation.set(0,i*2*Math.PI/10,Math.PI);
         
             dummy.scale.x = dummy.scale.y = dummy.scale.z = 0.5;
 
-         
-
             dummy.updateMatrix();
             mesh.setMatrixAt(i, dummy.matrix);
             this.dummyList.push(dummy);
         }
 
-
-
         this.mesh = mesh;
-
-        
-      
-
-
 
     }
 
     updateFaceMesh(pointsArray){
-
-        
-        
 
         var vPos = [];
 
@@ -217,16 +186,12 @@ export class FaceTrackHelper {
         
         const nowInMs = Date.now();
 
-
-
-
         var result = this.faceLandmarker.detectForVideo(this.video, nowInMs);
 
         // check if there is a face in the video frame
         if(typeof(result) != undefined){
+
             // check if there is a poseRecognized
-            
-            
             if(result.faceLandmarks.length > 0){
                 if(!this.initializedMesh){
                     this.createFaceMesh(result.faceLandmarks[0]);
@@ -251,14 +216,6 @@ export class FaceTrackHelper {
 
 
             if(result.faceBlendshapes.length > 0){
-                // result.faceBlendshapes[0].categories.forEach((res)=>{
-                
-                //     console.log(res);
-                // }
-                // )
-             //   console.log(result.faceBlendshapes[0].categories);
-
-            
 
                var targetShapes = result.faceBlendshapes[0].categories.filter((blendShape) => 
                     this.targetExpressions.includes(blendShape.categoryName)

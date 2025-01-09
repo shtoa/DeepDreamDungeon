@@ -1,8 +1,8 @@
-import {InputController} from "./InputController.js"
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
 
-import { GunController} from "./GunController.js";
-import { scene } from "./main.js";
+import {InputController} from "./../inputControls/InputController.js"
+import { GunController} from "../portal/GunController.js";
+import { scene } from "./../../main.js";
 
 // Code Adapted from tutorial by Simon Dev: https://www.youtube.com/watch?v=oqKzxPMLWxo&ab_channel=SimonDev
 export {inputController}

@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
-import { Joystick } from './joystick.js';
-import { Button } from './button.js';
+import { Joystick } from './touchControls/joystick.js';
+import { Button } from './touchControls/button.js';
 
 // code created by following tutorial by SimonDev: https://www.youtube.com/watch?v=oqKzxPMLWxo&ab_channel=SimonDev
 export class InputController{

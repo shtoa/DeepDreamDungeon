@@ -1,20 +1,14 @@
 // DEEP DREAM DUNGEON
 
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
-//import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.module.js';
-
-import {HandTrackHelper} from "./handTrackHelper.js" 
-import {FirstPersonCamera} from "./FirstPersonCamera.js"
-import {Room} from "./Room.js"
 
 import { FBXLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/FBXLoader.js';
-
-import { excludeBones, includeBones } from './boneHelpers.js';
-
 import { TWEEN } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/libs/tween.module.min.js';
-import { FaceTrackHelper } from './faceTrackHelper.js';
 
-import { Joystick } from './joystick.js';
+import {FirstPersonCamera} from "./Scripts/cameraControls/FirstPersonCamera.js"
+import {Room} from "./Scripts/portal/Room.js"
+import { excludeBones, includeBones } from './Scripts/helperClasses/boneHelpers.js';
+import { FaceTrackHelper } from './Scripts/faceTracking/faceTrackHelper.js';
 
 var camera, scene, renderer
 
@@ -59,7 +53,7 @@ const preload = async() =>{
     });
 
     var fLoader2 = await new FBXLoader();
-    await fLoader2.load("borderCorner.fbx", (object)=>
+    await fLoader2.load("./Assets/Models/decoration/borderCorner.fbx", (object)=>
             {
 
                 for(var i = 0; i < 4; i++){
@@ -83,7 +77,7 @@ const preload = async() =>{
 
 
 
-    await fLoader2.load("themeTrackerMonster.fbx", (object)=>{
+    await fLoader2.load("./Assets/Models/decoration/themeTrackerMonster.fbx", (object)=>{
         
         themeTrackerCreature = object; 
 
@@ -151,7 +145,7 @@ function init() {
     document.body.appendChild( container );
     container.id = "container"
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.05, 500 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.05, 450 );
  
     postCamera = new THREE.OrthographicCamera( -window.innerWidth/2-borderSize, window.innerWidth/2+borderSize, window.innerHeight/2+borderSize, -window.innerHeight/2-borderSize, 1, 3000 );
     postRenderTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight);
@@ -214,7 +208,7 @@ function init() {
 
     // setup renderer
 
-    renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, canvas: canvas } );
+    renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, canvas: canvas} );
     renderer.setClearColor( 0x000000, 0 );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -452,7 +446,7 @@ themeLabelFragment = `
     }
     `;
     
-    var themeAlphaTex = new THREE.TextureLoader().load("bannerAlpha.png");
+    var themeAlphaTex = new THREE.TextureLoader().load("./Assets/Models/decoration/bannerAlpha.png");
     themeAlphaTex.minFilter = THREE.NearestFilter;
     themeAlphaTex.magFilter = THREE.NearestFilter
 

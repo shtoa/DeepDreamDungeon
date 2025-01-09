@@ -1,7 +1,7 @@
 // class for oneway Portal
 
 import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module.js';
-import {scene, renderer} from './main.js';
+import {scene, renderer} from './../../main.js';
 import { TWEEN } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/libs/tween.module.min.js';
 
 export class Portal{
@@ -110,7 +110,9 @@ export class Portal{
                 
                 // Pervent Z fighting
                 polygonOffset: true,
-                polygonOffsetFactor: -200,
+                polygonOffsetFactor: -1000,
+               // polygonOffsetFactor: 10, 
+
 
                 uniformsNeedUpdate: true  
             
