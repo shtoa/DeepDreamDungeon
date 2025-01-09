@@ -38,6 +38,7 @@ export class Room {
         ceiling.receiveShadow = true;
         ceiling.material.map = new THREE.TextureLoader().load( `./themes/${this._curTheme}/textures/ceiling.png`);
         ceiling.material.needsUpdate = true;
+
       
         return ceiling
     }
@@ -92,6 +93,7 @@ export class Room {
         floor.receiveShadow = true;
         floor.material.map = new THREE.TextureLoader().load( `./themes/${this._curTheme}/textures/floor.png`);
         floor.material.needsUpdate = true;
+
       
         return floor
     }

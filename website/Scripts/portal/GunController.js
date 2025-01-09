@@ -556,10 +556,11 @@ export class GunController{
 
         this.destNameUI.material.map = this.destTexture;
 
-        this.wordRing.getObjectByName("Circle").material.transparent = true;
-        this.wordRing.getObjectByName("Circle").material.map = this.destTexture;
-        this.wordRing.getObjectByName("Circle").material.map.needsUpdate = true;
-
+        if(this.wordRing){
+            this.wordRing.getObjectByName("Circle").material.transparent = true;
+            this.wordRing.getObjectByName("Circle").material.map = this.destTexture;
+            this.wordRing.getObjectByName("Circle").material.map.needsUpdate = true;
+        }
         
   
     }
@@ -572,11 +573,7 @@ export class GunController{
 
     update(){
 
-        // if(this.FPSController._lateralVelocity.length() > 0){
-        //     this.animationsMap["walk"].play();
-        // } else {
-        //     this.animationsMap["walk"].stop();
-        // }
+        if(this.gunModel){
 
         if(Object.hasOwn(scene.userData, "faceMesh")){
             this.updateFamiliar()
@@ -596,12 +593,11 @@ export class GunController{
         this.destNameUI.lookAt(this._camera.position);
 
 
-        
-        this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2)))
-        this.wordRing.lookAt(this._camera.position);
-        this.wordRing.scale.set(0.0002,0.0002,0.0002);
-
-        
+        if(this.wordRing){
+            this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2)))
+            this.wordRing.lookAt(this._camera.position);
+            this.wordRing.scale.set(0.0002,0.0002,0.0002);
+        }
 
         if(this.ammoCount == 0){
             if(!this.isTransitioning && this.orbMaterial.uniforms.ammoTime.value != 1){
@@ -685,6 +681,7 @@ export class GunController{
             } 
         }
         this._checkJumpAnimation();
+    }
 
     }
 
