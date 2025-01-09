@@ -189,6 +189,7 @@ export class Portal{
             }
 
             // update portal bounds
+            this._portal.position.add(this.normal.clone().multiplyScalar(0.01))
 
             this._portal.userData.bounds = new THREE.Box3().setFromObject(newPortal , true);
             this._portal.userData.bounds.min = new THREE.Vector3(Math.round(this._portal.userData.bounds.min.x*10)/10, Math.round(this._portal.userData.bounds.min.y*10)/10, Math.round(this._portal.userData.bounds.min.z*10)/10);
