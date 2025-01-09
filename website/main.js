@@ -145,7 +145,7 @@ function init() {
     document.body.appendChild( container );
     container.id = "container"
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.05, 450 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.10, 450 ); // 0.05
  
     postCamera = new THREE.OrthographicCamera( -window.innerWidth/2-borderSize, window.innerWidth/2+borderSize, window.innerHeight/2+borderSize, -window.innerHeight/2-borderSize, 1, 3000 );
     postRenderTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight);
