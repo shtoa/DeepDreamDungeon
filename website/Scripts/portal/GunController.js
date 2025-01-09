@@ -48,7 +48,7 @@ export class GunController{
        // scene.add(this.destNameUI);
         
         scene.add(this.reticle);
-        this.reticle.material.map = new THREE.TextureLoader().load( `/Assets/Images/crosshair.png`);
+        this.reticle.material.map = new THREE.TextureLoader().load( `Assets/Images/crosshair.png`);
 
         //#endregion
         
@@ -95,7 +95,7 @@ export class GunController{
         this.isCharged = false;
 
 
-        this.noAmmoTexture = new THREE.TextureLoader().load("/Assets/Models/player/outOfAmmo.png");
+        this.noAmmoTexture = new THREE.TextureLoader().load("Assets/Models/player/outOfAmmo.png");
 
         const video = document.getElementById( 'video' );
         this.videoTexture = new THREE.VideoTexture( video )
@@ -156,7 +156,7 @@ export class GunController{
             // Add a mask to give portal and elliptical shape
             uniforms: {
                 videoTexture: {value: this.videoTexture},
-                noAmmoTexture: {value: new THREE.TextureLoader().load("/Assets/Models/player/outOfAmmo.png")},    
+                noAmmoTexture: {value: new THREE.TextureLoader().load("Assets/Models/player/outOfAmmo.png")},    
                 ammoTime: {value: 0}
             },
         
@@ -224,7 +224,7 @@ export class GunController{
      
         // reticle text
         var fLoader2 = new FBXLoader();
-        fLoader2.load("/Assets/Models/player/wordRing.fbx", (object)=>
+        fLoader2.load("Assets/Models/player/wordRing.fbx", (object)=>
             {
                 this.wordRing = object;
 
@@ -251,7 +251,7 @@ export class GunController{
     loadGunModel(){
         var fLoader = new FBXLoader();
 
-        fLoader.load("/Assets/Models/player/playerHands.fbx", (object)=>
+        fLoader.load("Assets/Models/player/playerHands.fbx", (object)=>
         {
 
             object.position.set(0.02,-0.02,-0.09)
@@ -461,7 +461,7 @@ export class GunController{
     updateFamiliar(){
         
         // move to initialize initialize Facemesh
-        if(Object.hasOwn(scene.userData,"faceMesh")){
+        if(Object.hasOwn(scene.userData,"faceMesh") && this.gunModel){
             if (this.familiarMesh != scene.userData.faceMesh){
                 this.initializeFamilliar();    
             } else {
