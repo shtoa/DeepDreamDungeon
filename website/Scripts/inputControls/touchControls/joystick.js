@@ -77,7 +77,15 @@ export class Joystick{
             }
 
             this.newJoystickPosition = new THREE.Vector2(this.joyStick.getBoundingClientRect().x, this.joyStick.getBoundingClientRect().y);
-            this.joyStickDelta = this.newJoystickPosition.clone().sub(this.restJoystickPosition).normalize();
+
+          
+
+            this.joyStickDelta = this.newJoystickPosition.clone().sub(this.restJoystickPosition).multiplyScalar(1/50);
+            this.joyStickDelta = this.joyStickDelta.clone().normalize().multiplyScalar(Math.pow(Math.min(this.joyStickDelta.clone().length(),1),4)).multiplyScalar(2);
+      
+           
+
+ 
             
         }
         }

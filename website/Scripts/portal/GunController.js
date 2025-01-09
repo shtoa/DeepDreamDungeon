@@ -38,15 +38,7 @@ export class GunController{
             new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, transparent: true })
         );
 
-        this.destNameUI  = new THREE.Mesh(
-            new THREE.PlaneGeometry( 0.008*6, 0.008),
-            new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide, transparent: true })
-        );
 
-        this.destNameUI.material.map = this.destTexture;
-
-       // scene.add(this.destNameUI);
-        
         scene.add(this.reticle);
         this.reticle.material.map = new THREE.TextureLoader().load( `Assets/Images/crosshair.png`);
 
@@ -62,12 +54,8 @@ export class GunController{
         var wDir = new THREE.Vector3();
         this._camera.getWorldDirection(wDir);
 
-        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2)))
+        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
         this.reticle.lookAt(this._camera.position);
-
-
-        this.destNameUI.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2).add(new THREE.Vector3(0,0.01,0))));
-        this.destNameUI.lookAt(this._camera.position);
 
         this.loadGunModel();
 
@@ -232,7 +220,7 @@ export class GunController{
                 var wDir = new THREE.Vector3();
                 this._camera.getWorldDirection(wDir);
 
-                this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2)))
+                this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
                 this.wordRing.lookAt(this._camera.position);
                 this.wordRing.scale.set(0.0002,0.0002,0.0002);
                 this.wordRing.material = new THREE.MeshPhongMaterial( {transparent: true});
@@ -254,9 +242,9 @@ export class GunController{
         fLoader.load("Assets/Models/player/playerHands.fbx", (object)=>
         {
 
-            object.position.set(0.02,-0.02,-0.09)
+            object.position.set(0.02,-0.02,-0.13)
             
-            var scale = 0.0002;
+            var scale = 0.00025;
             object.scale.set(scale,scale,scale);
       
             scene.add(object)
@@ -515,7 +503,7 @@ export class GunController{
             
             this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur.clone().add(this.familiarMesh.userData.addTranslation));
 
-            this.familiarMesh.lookAt(this._camera.position);
+           this.familiarMesh.lookAt(this._camera.position);
         
             this._camera.updateWorldMatrix(true,true); // important for objects that are linked to camera
 
@@ -552,10 +540,6 @@ export class GunController{
         ctx.fillText(destinationText, (this.canvasDestination.width/2) - (textWidth/2), (this.canvasDestination.height/2)+25);
         ctx.strokeText(destinationText, (this.canvasDestination.width/2) - (textWidth/2), (this.canvasDestination.height/2)+25);
 
-        this.destNameUI.material.map.needsUpdate = true;
-
-        this.destNameUI.material.map = this.destTexture;
-
         if(this.wordRing){
             this.wordRing.getObjectByName("Circle").material.transparent = true;
             this.wordRing.getObjectByName("Circle").material.map = this.destTexture;
@@ -567,8 +551,6 @@ export class GunController{
 
     clearDestinationText(){
         this.canvasDestination.getContext("2d").clearRect(0,0,this.canvasDestination.width,this.canvasDestination.height);
-        this.destNameUI.material.map.needsUpdate = true;
-        this.destNameUI.material.map = this.destTexture;
     }
 
     update(){
@@ -586,15 +568,11 @@ export class GunController{
         var wDir = new THREE.Vector3();
         this._camera.getWorldDirection(wDir);
 
-        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2)))
+        this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
         this.reticle.lookAt(this._camera.position);
 
-        this.destNameUI.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.15)));
-        this.destNameUI.lookAt(this._camera.position);
-
-
         if(this.wordRing){
-            this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.2)))
+            this.wordRing.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.25)))
             this.wordRing.lookAt(this._camera.position);
             this.wordRing.scale.set(0.0002,0.0002,0.0002);
         }
