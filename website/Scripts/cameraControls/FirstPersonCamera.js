@@ -223,7 +223,9 @@ export class FirstPersonCamera{
     _handleTeleport(portal, translationNextFrame){
         
         // check if collides with room
-        var newRBounds = scene.userData.destinationRoom.bounds.clone(); // check if the translation is within the new room bounds
+
+        // FIXME: POTENTIAL FIX TO PORTAL CLIPPING
+        var newRBounds = scene.userData.destinationRoom.bounds.clone().expandByScalar(-0.1); // check if the translation is within the new room bounds
         var newPosCamera = portal.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation)); // add the new translation to the camera
 
         if(portal.normal.y != 0){
