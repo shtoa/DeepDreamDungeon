@@ -76,6 +76,7 @@ export class Portal{
                 vec2 vFromCenter = vec2(vUv.x * shrink_width, vUv.y * shrink_height) - vec2(0.5 * shrink_width, 0.5 * shrink_height);
                 vec2 shrinkUV = vec2(vUv.x * shrink_width, vUv.y * shrink_height);
                
+                gl_FragColor = maskedPortal;
 
                 if(dist > (portalOpeningTime / (26.f + 10.f*(dist*sin(time*10.f))))){
                     
@@ -110,7 +111,7 @@ export class Portal{
                 
                 // Pervent Z fighting
                 polygonOffset: true,
-                polygonOffsetFactor: -50,
+                polygonOffsetFactor: -1000,
                // polygonOffsetFactor: 10, 
 
 

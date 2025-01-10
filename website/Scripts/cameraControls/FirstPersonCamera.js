@@ -39,14 +39,14 @@ export class FirstPersonCamera{
      
         this._isGrounded = true; 
 
-        this._lateralAcceleration = 500;
+        this._lateralAcceleration = 600;
         this._drag = 250;
-        this._maxLateralVelocity = 120;
+        this._maxLateralVelocity = 130;
         this._lateralVelocity = new THREE.Vector2(0, 0);
 
 
         this._maxSprintVelocity = 180;
-        this._sprintAcceleration = 600;
+        this._sprintAcceleration = 700;
         this.isSprinting = false;
 
         //#endregion
@@ -209,7 +209,6 @@ export class FirstPersonCamera{
 
             // check if collides with portal
             outPortalBounds = outPortalBounds.clone().expandByVector(new THREE.Vector3(Math.abs(scene.userData.outPortal.normal.x), Math.abs(scene.userData.outPortal.normal.y)*((2*10)/3), Math.abs(scene.userData.outPortal.normal.z)).multiplyScalar(3));
-
         
             if (portalBounds.containsPoint(translationNextFrame) && this.GunController.portalTest.isOpen){
                 this._handleTeleport(scene.userData.inPortal, translationNextFrame);
