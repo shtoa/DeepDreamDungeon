@@ -625,6 +625,9 @@ export class GunController{
         if(this.portalTest){
             this.portalTest._updatePortal();
         }
+        if(this.outPortal){
+            this.outPortal._updatePortal();
+        }
 
   
         this.mixer.update(scene.userData.globalDelta) // FIXME MAKE SURE MIXER IS INITIALIZED
@@ -672,8 +675,8 @@ export class GunController{
     _checkJumpAnimation(){
         
 
-        this.gunModel.setRotationFromEuler(new THREE.Euler().set(0.5*(this.FPSController._translation.y-this.FPSController._groundPosition.y)/62,0,0));
-    
+       // this.gunModel.setRotationFromEuler(new THREE.Euler().set(0.5*(this.FPSController._translation.y-this.FPSController._groundPosition.y)/62,0,0));
+
     }
 
     _checkIsAnimationPlaying(){
@@ -741,16 +744,14 @@ export class GunController{
 
             this.reticleRotationZ -= scene.userData.globalDelta*4;
 
-        
-
-
-
-
         } else {
             this.animationsMap["charge"].stop();
             this.isCharged = false;
         }
     }
+
+
+    //#region Protal Calculations
 
     _calculateExitPortalPosition(){
        
@@ -765,6 +766,49 @@ export class GunController{
         newPortalPosFromCenter = newPortalPosFromCenter.reflect(this.portalNormal); // reflect the portal position to be on the opposite side of the destination room
 
         this.secondPortalPos = newPortalPosFromCenter.clone().add(destinationRoom._center);
+
+
+        const raycaster = new THREE.Raycaster(); // intialize raycaster 
+        raycaster.set(destinationRoom._center, newPortalPosFromCenter.clone().normalize());
+        var outHit = raycaster.intersectObjects(scene.userData.portalableSurfaces)[0] // check if raycaster intersect any of the surfaces
+
+
+        if(this.outPortal){
+            this.outPortal._removePortal();
+        }
+
+        this.outPortal = new Portal(this._camera); // create exit portal
+        var exitPortal = new THREE.Mesh(this.portalTest.portalGeom.clone(), this.portalMaterial);
+
+        exitPortal.recieveShadow = true;
+
+        exitPortal.position.copy(outHit.point) 
+                
+        var n = outHit.face.normal.clone();
+        this.outPortal.normal = n.clone();
+
+        n.transformDirection(outHit.object.matrixWorld);
+        n.add(exitPortal.position);
+
+
+        
+        var wDir = new THREE.Vector3();
+        this._camera.getWorldDirection(wDir)
+
+        
+
+        exitPortal.up.copy(wDir.multiplyScalar((this.outPortal.normal.clone().dot(THREE.Object3D.DefaultUp.clone()))).add(THREE.Object3D.DefaultUp)) /// redo this research how rto do projection // THREE.Object3D.DefaultUp
+        exitPortal.lookAt(n);
+  
+        this.outPortal._placePortal(outHit, exitPortal);
+ 
+
+        this.outPortal.linkPortal(this.portalTest._portal.position)
+
+        scene.userData.outPortal = this.outPortal;
+        
+
+
     }
 
 
@@ -820,22 +864,18 @@ export class GunController{
 
         newPortal.up.copy(wDir.multiplyScalar((normal.clone().dot(THREE.Object3D.DefaultUp))).add(THREE.Object3D.DefaultUp)) /// redo this research how rto do projection // THREE.Object3D.DefaultUp
         newPortal.lookAt(n);
-        const hit = hits[0]
-        
-        if(this.outPortal){
-            this.outPortal._removePortal();
-        }
-  
-        this.portalTest._placePortal(hit, newPortal);
 
-        this.outPortal = new Portal(this._camera); // create exit portal
+        const hit = hits[0]
+        this.portalTest._placePortal(hit, newPortal);
         
+
         this._calculateExitPortalPosition(); // calculate position of exit portal
-        this.outPortal.position = this.secondPortalPos;   
-        
-        this.portalTest.linkPortal(this.outPortal.position);
+        this.outPortal.position = this.secondPortalPos;  
+            
+        this.portalTest.linkPortal(this.outPortal._portal.position);
 
     }
+    //#endregion
 
 
 }

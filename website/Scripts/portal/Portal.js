@@ -14,7 +14,7 @@ export class Portal{
         this.renderTarget = new THREE.WebGLRenderTarget( window.innerWidth,window.innerHeight);
         this.portalCamera = new THREE.PerspectiveCamera( this._playerCamera.fov, this._playerCamera.aspect, 1, 2000 ); // make sure to scale when resizing 
         
-        this.portalGeom = new THREE.PlaneGeometry(40,40);
+        this.portalGeom = new THREE.PlaneGeometry(20,35); // 40 40
         this.normal;
         this.isOpen = false;
 
@@ -66,8 +66,8 @@ export class Portal{
 
                 // https://godotshaders.com/shader/simple-ellipse-shader/
 
-                float width = 15.f;
-                float height = 20.f;
+                float width = 25.f;
+                float height = 20.f; // 15 20
 
                 float shrink_width = 2.0 / width;
                 float shrink_height = 2.0 / height;
@@ -110,7 +110,7 @@ export class Portal{
                 
                 // Pervent Z fighting
                 polygonOffset: true,
-                polygonOffsetFactor: -1000,
+                polygonOffsetFactor: -50,
                // polygonOffsetFactor: 10, 
 
 
@@ -127,7 +127,20 @@ export class Portal{
 
         // portal transform 
         this.secondPortalPos = secondPortalPos;
+    
         
+    }
+
+
+    _getExitPortalHit(){
+        const raycaster = new THREE.Raycaster(); // intialize raycaster 
+        raycaster.setFromCamera({x:0,y:0}, this.portalCamera); //
+       // raycaster.set(,)
+        
+        //this.exitPortal = new Portal(playerCamera);
+        const hits = raycaster.intersectObjects(scene.userData.portalableSurfaces) // check if raycaster intersect any of the surfaces
+
+        return hits[1];
     }
 
     _placePortal(hit, inPortalTransform){
@@ -189,7 +202,7 @@ export class Portal{
             }
 
             // update portal bounds
-            this._portal.position.add(this.normal.clone().multiplyScalar(0.01))
+            //this._portal.position.add(this.normal.clone().multiplyScalar(0.01))
 
             this._portal.userData.bounds = new THREE.Box3().setFromObject(newPortal , true);
             this._portal.userData.bounds.min = new THREE.Vector3(Math.round(this._portal.userData.bounds.min.x*10)/10, Math.round(this._portal.userData.bounds.min.y*10)/10, Math.round(this._portal.userData.bounds.min.z*10)/10);

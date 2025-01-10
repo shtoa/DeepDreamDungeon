@@ -192,7 +192,7 @@ export class FirstPersonCamera{
 
         // fixme convert to use scene variables
         // fixme to not constantly run
-        if(scene.userData.inPortal){
+        if(scene.userData.inPortal && scene.userData.outPortal){
             
             var portalBounds = scene.userData.inPortal._portal.userData.bounds.clone();
 
@@ -205,46 +205,57 @@ export class FirstPersonCamera{
             //this._scene.add( this.box );
             //#endregion 
 
+            var outPortalBounds = scene.userData.outPortal._portal.userData.bounds.clone();
+
+            // check if collides with portal
+            outPortalBounds = outPortalBounds.clone().expandByVector(new THREE.Vector3(Math.abs(scene.userData.outPortal.normal.x), Math.abs(scene.userData.outPortal.normal.y)*((2*10)/3), Math.abs(scene.userData.outPortal.normal.z)).multiplyScalar(3));
+
+        
             if (portalBounds.containsPoint(translationNextFrame) && this.GunController.portalTest.isOpen){
-
-                // check if collides with room
-                var newRBounds = scene.userData.destinationRoom.bounds.clone(); // check if the translation is within the new room bounds
-
-                var newPosCamera = scene.userData.inPortal.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation)); // add the new translation to the camera
-
-                if(scene.userData.inPortal.normal.y != 0){
-                    this._groundPosition = new THREE.Vector3(0,scene.userData.curRoom.bounds.min.y-10,0);
-                }
-
-                if(newRBounds.containsPoint(newPosCamera)){ // switch rooms if the player intersect portal
-                    // swap rooms
-                    var newRoom = scene.userData.destinationRoom;
-                    
-                    scene.userData.destinationRoom = scene.userData.curRoom;
-                    scene.userData.curRoom = newRoom;
-
-                    scene.userData._preTeleportDeltaTranslate = translationNextFrame.clone().sub(this._translation);
-                    
-                    // fix player translation 
-                    this._translation = scene.userData.inPortal.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation));
-                    this._groundPosition = new THREE.Vector3(0,scene.userData.curRoom.bounds.min.y+10,0); // set new ground position
-
-                    // Update Camera
-                    this._updateRotation();
-                    this._updateCamera();
-
-                    document.dispatchEvent(this.teleportEvent);
-
-                } 
+                this._handleTeleport(scene.userData.inPortal, translationNextFrame);
+            } else if (outPortalBounds.containsPoint(translationNextFrame) && this.GunController.portalTest.isOpen){
+                this._handleTeleport(scene.userData.outPortal, translationNextFrame);
             } else {
                 this._groundPosition = new THREE.Vector3(0,scene.userData.curRoom.bounds.min.y + 10,0); // stops player from sinking in portal when quickly going away from it
             }
         } 
-  
-        if (!this._isGrounded){
-            this._translation.add(up);
-        }
     }
+
+    _handleTeleport(portal, translationNextFrame){
+        
+        // check if collides with room
+        var newRBounds = scene.userData.destinationRoom.bounds.clone(); // check if the translation is within the new room bounds
+        var newPosCamera = portal.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation)); // add the new translation to the camera
+
+        if(portal.normal.y != 0){
+            this._groundPosition = new THREE.Vector3(0,scene.userData.curRoom.bounds.min.y-20,0);
+
+        }
+
+        if(newRBounds.containsPoint(newPosCamera)){ // switch rooms if the player intersect portal
+
+            // swap rooms
+            var newRoom = scene.userData.destinationRoom;
+            
+            scene.userData.destinationRoom = scene.userData.curRoom;
+            scene.userData.curRoom = newRoom;
+
+            scene.userData._preTeleportDeltaTranslate = translationNextFrame.clone().sub(this._translation);
+            
+            // fix player translation 
+            this._translation = portal.portalCamera.position.clone().add(translationNextFrame.clone().sub(this._translation));
+            this._groundPosition = new THREE.Vector3(0,scene.userData.curRoom.bounds.min.y+10,0); // set new ground position
+
+            // Update Camera
+            this._updateRotation();
+            this._updateCamera();
+
+            document.dispatchEvent(this.teleportEvent);
+
+        } 
+
+    }
+
     _updateRotation(){
 
         // delta mouse 
