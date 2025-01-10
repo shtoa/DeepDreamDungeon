@@ -234,15 +234,8 @@ function init() {
     createCurThemeTexture();
     initThemelabelShader();
 
-    // if( ('ontouchstart' in window)){
-    //     scene.userData.joyStickDelta = new THREE.Vector2(0,0);
-    //     initializeJoystick();
-    // }
-
     // Start the animation Loop
     animate();
-
-    
 
 }
 

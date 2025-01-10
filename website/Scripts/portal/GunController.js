@@ -8,11 +8,13 @@ import {scene, actionList} from './../../main.js'
 
 // FIX ME USE STATE MACHINE FOR ANIMATIONS
 
+
+
 export class GunController{
-    
+
     constructor(camera, FPSController){
 
-
+        
         //#region destination text canvas
         this.canvasDestination = document.createElement("canvas")
         this.canvasDestination.id = "canvasDestination"
@@ -55,10 +57,7 @@ export class GunController{
         this._camera.getWorldDirection(wDir);
 
         this.reticle.position.copy(this._camera.position.clone().add(wDir.clone().multiplyScalar(0.21)))
-        this.reticle.lookAt(this._camera.position);
-
-        this.loadGunModel();
-       
+        this.reticle.lookAt(this._camera.position);       
 
         this.isSpinning = false;
         this.teleporting = false;
@@ -233,168 +232,174 @@ export class GunController{
 
                 scene.add(object);
             })
-        
+
+        this.loadGunModel();
 
 
     }
 
-    loadGunModel(){
+    async loadGunModel(){
         var fLoader = new FBXLoader();
 
-        fLoader.load("Assets/Models/player/playerHands.fbx", (object)=>
-        {
-
-            object.position.set(0.02,-0.02,-0.13)
-            
-            var scale = 0.00025;
-            object.scale.set(scale,scale,scale);
-      
-            scene.add(object)
-           
-            this.gunModel = object;
-            this.chargeTween = new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale);
-    
-            this.gunModel.getObjectByName("cameraOrb").material = this.orbMaterial ;
-
-            this.mixer = new THREE.AnimationMixer( object );
-            this.animationsMap["flip"] = this.mixer.clipAction( object.animations[ 7 ] );
-            this.animationsMap["flip"].loop = THREE.LoopOnce;
-
-            this.animationsMap["startFlip"] = this.mixer.clipAction( object.animations[ 0 ] );
-            this.animationsMap["startFlip"].clampWhenFinished = true;
-            this.animationsMap["startFlip"].loop = THREE.LoopOnce;
-
-            this.animationsMap["stopFlip"] = this.mixer.clipAction( object.animations[ 5 ] );
-            this.animationsMap["stopFlip"].clampWhenFinished = true;
-            this.animationsMap["stopFlip"].loop = THREE.LoopOnce;
-            this.animationsMap["stopFlip"].setDuration(0.4);
-
-            this.animationsMap["shoot"] = this.mixer.clipAction( object.animations[ 8 ] );
-            this.animationsMap["shoot"].clampWhenFinished = true;
-            this.animationsMap["shoot"].loop = THREE.LoopOnce;
-        
-            this.animationsMap["reloadArms"] = this.mixer.clipAction( object.animations[ 2 ] );
-            this.animationsMap["reloadArms"].clampWhenFinished = true;
-            this.animationsMap["reloadArms"].loop = THREE.LoopOnce;
-            this.animationsMap["reloadArms"].setDuration(1.3);
-
-            this.animationsMap["reloadOrb"] = this.mixer.clipAction( object.animations[ 4 ] );
-            this.animationsMap["reloadOrb"].clampWhenFinished = true;
-            this.animationsMap["reloadOrb"].loop = THREE.LoopOnce;
-            this.animationsMap["reloadOrb"].setDuration(1.3);
-
-            this.animationsMap["charge"] = this.mixer.clipAction( object.animations[ 3 ] );
-            this.animationsMap["charge"].clampWhenFinished = true;
-            this.animationsMap["charge"].loop = THREE.LoopOnce;
-            this.animationsMap["charge"].setDuration(0.7);
-
-            this.animationsMap["noAmmo"] = this.mixer.clipAction( object.animations[ 1 ] );
-            this.animationsMap["noAmmo"].clampWhenFinished = true;
-            this.animationsMap["noAmmo"].loop = THREE.LoopOnce;
-            this.animationsMap["noAmmo"].setDuration(1.5);
-
-            this.isSpinning = false;   
-            this.gunModel.getObjectByName("chargingEffect").material = this.gunChargeEffectMat;
-
-            this.mixer.timeScale = 1.5; // set timescale to help with speed of animation
-            this.mixer.addEventListener("finished", (e) => {
-
-                if(e.action._clip.name == "arm|spinStart"){
-                    
-                    if(!this.animationsMap["stopFlip"].isRunning()){
-                        this.animationsMap["startFlip"].fadeOut(0.1);
-                        this.animationsMap["flip"].reset().play();
-                        //this.animationsMap.loop = THREE.LoopRepeat;
-                        this.isSpinning = true;
-                    }
-
-                }
-
-
-                if(e.action._clip.name == "arm|spinStop"){
-                    this.animationsMap["stopFlip"].stop();
-                    //this.animationsMap["flip"].stop();
-                    this.isSpinning = false;
-                }
-
-                if(e.action._clip.name == "arm|shootPortal"){
-                    this.animationsMap["shoot"].stop();
-                    this.animationsMap["flip"].stop();
-                    this.isSpinning = false;
-
-                    new TWEEN.Tween(this).to({reticleRotationZ: 0}, 500).easing(TWEEN.Easing.Cubic.InOut).start();
-                    this.clearDestinationText()
-
-                    
-                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
-                }
-
-                // FIX ME: MAKE SAME LENGTH ANIMATION
-
-                if(e.action._clip.name == "cameraOrb|reload" && !this.animationsMap["reloadArms"].isRunning()){
-                    this.animationsMap["reloadOrb"].stop();
-                    this.animationsMap["reloadArms"].stop();
-                    this.animationsMap["flip"].stop();
-                    this.ammoCount = 1;
-
-                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
-                   
-                }
-
-                if(e.action._clip.name == "arm|reload.001" && !this.animationsMap["reloadOrb"].isRunning()){
-                    this.animationsMap["reloadArms"].stop();
-                    this.animationsMap["reloadOrb"].stop();
-                    this.animationsMap["flip"].stop();
-                    this.ammoCount = 1;
-
-                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
-              
-                }
-
-                if(e.action._clip.name == "arm|spin"){
-              
-                    this.animationsMap["stopFlip"].play();
-                    this.isSpinning = false;
-                }
-
-                if(e.action._clip.name == "arm|noAmmo"){
-
-                    this.animationsMap["noAmmo"].reset().stop();
-                    
-                    this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
-                }
-
-                if(e.action._clip.name == "arm|charge"){
-
-                    this.isCharged = true;
-                    scene.userData.changingScene = true;
-
-
-                    if(!this.chargeTween.isPlaying()){
-                        this.chargeTween.to({x:20,y:20,z:20}, 1000).easing(TWEEN.Easing.Cubic.In).start();
-                    }
-                    
-                    
-                } 
-            })
-
-            this.gunModel.children.forEach(child => {
-                    child.renderOrder = -1
-                    child.frustumCulled = false;
-                }
-            )
-
+        var loadedGunModel = await fLoader.loadAsync("Assets/Models/player/playerHands.fbx");
+        await this.setupGunModel(loadedGunModel);
+        await this.textureGunModel();
        
-            this.gunModel.frustumCulled = false;
+        console.log(this.gunModel)
+      
+        await scene.add(this.gunModel);
+        this.gunModel.parent = this._camera;
+    }
 
-            object.parent = this._camera;
+    async setupGunModel(res){
+        
+
+        res.position.set(0.02,-0.02,-0.13)
+        
+        var scale = 0.00025;
+        res.scale.set(scale,scale,scale);
+    
+        // scene.add(object)
+        var object = res;
+        
+        
+        this.gunModel = object;
+
+        this.chargeTween = new TWEEN.Tween(this.gunModel.getObjectByName("chargingEffect").scale);
+
+        this.gunModel.getObjectByName("cameraOrb").material = this.orbMaterial;
+    
+
+        this.mixer = new THREE.AnimationMixer( object );
+        this.animationsMap["flip"] = this.mixer.clipAction( object.animations[ 7 ] );
+        this.animationsMap["flip"].loop = THREE.LoopOnce;
+
+        this.animationsMap["startFlip"] = this.mixer.clipAction( object.animations[ 0 ] );
+        this.animationsMap["startFlip"].clampWhenFinished = true;
+        this.animationsMap["startFlip"].loop = THREE.LoopOnce;
+
+        this.animationsMap["stopFlip"] = this.mixer.clipAction( object.animations[ 5 ] );
+        this.animationsMap["stopFlip"].clampWhenFinished = true;
+        this.animationsMap["stopFlip"].loop = THREE.LoopOnce;
+        this.animationsMap["stopFlip"].setDuration(0.4);
+
+        this.animationsMap["shoot"] = this.mixer.clipAction( object.animations[ 8 ] );
+        this.animationsMap["shoot"].clampWhenFinished = true;
+        this.animationsMap["shoot"].loop = THREE.LoopOnce;
+    
+        this.animationsMap["reloadArms"] = this.mixer.clipAction( object.animations[ 2 ] );
+        this.animationsMap["reloadArms"].clampWhenFinished = true;
+        this.animationsMap["reloadArms"].loop = THREE.LoopOnce;
+        this.animationsMap["reloadArms"].setDuration(1.3);
+
+        this.animationsMap["reloadOrb"] = this.mixer.clipAction( object.animations[ 4 ] );
+        this.animationsMap["reloadOrb"].clampWhenFinished = true;
+        this.animationsMap["reloadOrb"].loop = THREE.LoopOnce;
+        this.animationsMap["reloadOrb"].setDuration(1.3);
+
+        this.animationsMap["charge"] = this.mixer.clipAction( object.animations[ 3 ] );
+        this.animationsMap["charge"].clampWhenFinished = true;
+        this.animationsMap["charge"].loop = THREE.LoopOnce;
+        this.animationsMap["charge"].setDuration(0.7);
+
+        this.animationsMap["noAmmo"] = this.mixer.clipAction( object.animations[ 1 ] );
+        this.animationsMap["noAmmo"].clampWhenFinished = true;
+        this.animationsMap["noAmmo"].loop = THREE.LoopOnce;
+        this.animationsMap["noAmmo"].setDuration(1.5);
+
+        this.isSpinning = false;   
+        this.gunModel.getObjectByName("chargingEffect").material = this.gunChargeEffectMat;
+
+        this.mixer.timeScale = 1.5; // set timescale to help with speed of animation
+        this.mixer.addEventListener("finished", (e) => {
+
+            if(e.action._clip.name == "arm|spinStart"){
+                
+                if(!this.animationsMap["stopFlip"].isRunning()){
+                    this.animationsMap["startFlip"].fadeOut(0.1);
+                    this.animationsMap["flip"].reset().play();
+                    //this.animationsMap.loop = THREE.LoopRepeat;
+                    this.isSpinning = true;
+                }
+
+            }
+
+
+            if(e.action._clip.name == "arm|spinStop"){
+                this.animationsMap["stopFlip"].stop();
+                //this.animationsMap["flip"].stop();
+                this.isSpinning = false;
+            }
+
+            if(e.action._clip.name == "arm|shootPortal"){
+                this.animationsMap["shoot"].stop();
+                this.animationsMap["flip"].stop();
+                this.isSpinning = false;
+
+                new TWEEN.Tween(this).to({reticleRotationZ: 0}, 500).easing(TWEEN.Easing.Cubic.InOut).start();
+                this.clearDestinationText()
+
+                
+                this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
+            }
+
+            // FIX ME: MAKE SAME LENGTH ANIMATION
+
+            if(e.action._clip.name == "cameraOrb|reload" && !this.animationsMap["reloadArms"].isRunning()){
+                this.animationsMap["reloadOrb"].stop();
+                this.animationsMap["reloadArms"].stop();
+                this.animationsMap["flip"].stop();
+                this.ammoCount = 1;
+
+                this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
+                
+            }
+
+            if(e.action._clip.name == "arm|reload.001" && !this.animationsMap["reloadOrb"].isRunning()){
+                this.animationsMap["reloadArms"].stop();
+                this.animationsMap["reloadOrb"].stop();
+                this.animationsMap["flip"].stop();
+                this.ammoCount = 1;
+
+                this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
             
-            this._camera.add(object); // check this line
+            }
+
+            if(e.action._clip.name == "arm|spin"){
+            
+                this.animationsMap["stopFlip"].play();
+                this.isSpinning = false;
+            }
+
+            if(e.action._clip.name == "arm|noAmmo"){
+
+                this.animationsMap["noAmmo"].reset().stop();
+                
+                this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
+            }
+
+            if(e.action._clip.name == "arm|charge"){
+
+                this.isCharged = true;
+                scene.userData.changingScene = true;
+
+
+                if(!this.chargeTween.isPlaying()){
+                    this.chargeTween.to({x:20,y:20,z:20}, 1000).easing(TWEEN.Easing.Cubic.In).start();
+                }
+                
+                
+            } 
+        })
 
     
-        });
-    
-    
+
+        this.gunModel.children.forEach(child => {
+                child.renderOrder = -1
+                //child.frustumCulled = false;
+            }
+        )
+
     }
 
     initializeFamilliar(){
@@ -557,6 +562,28 @@ export class GunController{
 
     clearDestinationText(){
         this.canvasDestination.getContext("2d").clearRect(0,0,this.canvasDestination.width,this.canvasDestination.height);
+    }
+
+    textureGunModel(){
+
+        this.gunModel.getObjectByName("gun").traverse((obj)=>
+            {
+                if(obj.type == "Mesh"){
+                    if(obj.material.length > 0){
+                        obj.material.forEach((mat)=>{
+                            mat.map = new THREE.TextureLoader().load("Assets/Models/player/gunColor.png");
+                            mat.color.setRGB(1,1,1);
+                            mat.map.needsUpdate = true;
+                            mat.needsUpdate = true;
+
+                        })
+                    }
+                }
+            
+            }
+            )
+        
+           
     }
 
     update(){
