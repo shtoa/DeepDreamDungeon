@@ -140,6 +140,9 @@ export class FaceTrackHelper {
         await geometry.computeVertexNormals();
         geometry.getAttribute("uv").needsUpdate = true;
 
+        //geometry.computeBoundingBox();
+        //geometry.center();
+
         const mesh = new THREE.InstancedMesh( geometry, material,10);
 
        // inspired by https://www.youtube.com/watch?v=dKg5H1OtDK8&ab_channel=WaelYasmina

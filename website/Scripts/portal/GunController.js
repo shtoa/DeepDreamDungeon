@@ -78,6 +78,8 @@ export class GunController{
 
             this.isSpinning = false;
 
+            this.cleanSnapshots();
+
             //recognition.start();
         });
         this.animationsMap = new Object();
@@ -236,7 +238,169 @@ export class GunController{
         this.loadGunModel();
 
 
+        // preload mask textures
+        this.maskTexture = new THREE.TextureLoader().load("Assets/Models/face/scaryMask.png")
+        this.maskMap = new Map();
+        var emotions = ["Kiss", "Smile", "Frown", "Pressed"];
+        emotions.forEach((emotion)=>{
+            this.maskMap.set(emotion, new THREE.TextureLoader().load((`Assets/Models/face/${emotion}.png`)))
+        })
+        
+        this.snapshotMeshArray = [];
+
+        document.addEventListener("actionAdded", (e)=>{
+            this.maskTexture = this.maskMap.get(e.detail);
+
+
+
+            var snapshotGeom = this.familiarMesh.geometry.clone();
+            var snapshotMaterial = this.familiarMesh.material.clone();
+            snapshotMaterial = this.createSnapShotMaterial(this.maskMap.get(e.detail));
+            
+            snapshotMaterial.needsUpdate = true;
+
+            var snapshotMesh = new THREE.Mesh(snapshotGeom, snapshotMaterial);
+            snapshotMesh.geometry.computeBoundingBox();
+            snapshotMesh.geometry.center();
+
+            snapshotGeom.rotateZ(Math.PI);
+
+
+            this.familiarMesh.add(snapshotMesh);
+
+            snapshotMesh.scale.set(0.025,0.025,0.025);
+        
+     
+            snapshotMesh.position.copy(this.familiarMesh.position);
+
+            scene.add(snapshotMesh);
+
+            this.snapshotMeshArray.push(snapshotMesh);
+
+        })
+
+
     }
+
+
+
+    updateSnapshots()
+    {
+        var i = 0;
+        this.snapshotMeshArray.forEach((snapshotMesh)=>{
+
+            var wPos = new THREE.Vector3()
+            this.gunModel.getObjectByName("Familiar").getWorldPosition(wPos);
+            snapshotMesh.position.copy(this.familiarMesh.position.clone().sub(this.familiarMesh.userData.addTranslation).add(new THREE.Vector3(0,0.01*i-0.01,0)));
+            i += 1;
+            snapshotMesh.lookAt(this._camera.position)
+        })
+    }
+
+    createSnapShotMaterial(faceTexture){
+        var snapshotVertex  = `
+            varying vec4 vPos;
+            varying vec4 testPos;
+            uniform mat4 camProj;
+            uniform mat4 viewMat;
+            uniform mat4 model;
+            varying vec2 vUv;
+            void main() {
+                // projectionMatrix
+                vPos = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    
+                gl_Position = vPos;
+                vUv = uv;
+                testPos = camProj * model * vec4( position, 1.0 );
+    
+            }
+        `;
+        var snapshotFragment = `
+            varying vec4 vPos;
+            varying vec4 testPos;
+            uniform sampler2D faceTex;
+            uniform float fadeTime;
+            varying vec2 vUv;
+
+            // Simplex 2D noise
+            //
+            vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+
+            float snoise(vec2 v){
+            const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                    -0.577350269189626, 0.024390243902439);
+            vec2 i  = floor(v + dot(v, C.yy) );
+            vec2 x0 = v -   i + dot(i, C.xx);
+            vec2 i1;
+            i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+            vec4 x12 = x0.xyxy + C.xxzz;
+            x12.xy -= i1;
+            i = mod(i, 289.0);
+            vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+            + i.x + vec3(0.0, i1.x, 1.0 ));
+            vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
+                dot(x12.zw,x12.zw)), 0.0);
+            m = m*m ;
+            m = m*m ;
+            vec3 x = 2.0 * fract(p * C.www) - 1.0;
+            vec3 h = abs(x) - 0.5;
+            vec3 ox = floor(x + 0.5);
+            vec3 a0 = x - ox;
+            m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+            vec3 g;
+            g.x  = a0.x  * x0.x  + h.x  * x0.y;
+            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+            return 130.0 * dot(m, g);
+            }
+    
+        
+            void main() {
+                
+                vec4 faceMaskCol = texture2D(faceTex, vUv); 
+                
+                if((snoise(vUv*3.0)+1.0)/2.0 > fadeTime){
+                    gl_FragColor = vec4(faceMaskCol.xyz,1.0);
+                } else if ((snoise(vUv*3.0)+1.0)/2.0 > fadeTime-0.05){
+                    gl_FragColor = vec4(0.5,0,0,1.0);
+                }
+           
+            }
+            `;
+    
+        return new THREE.ShaderMaterial( {
+    
+            uniforms: {
+                faceTex: {value: faceTexture}, 
+                fadeTime: {value: 0},
+            },
+        
+            // Declare Vertex and Fragment Shader
+            vertexShader: snapshotVertex,
+            fragmentShader: snapshotFragment,
+            side: THREE.DoubleSide,
+            transparent: true,
+            uniformsNeedUpdate: true  
+            
+        
+        } );
+    }
+
+    cleanSnapshots(){
+        this.snapshotMeshArray.forEach(snapshotMesh =>{
+
+            new TWEEN.Tween(snapshotMesh.material.uniforms.fadeTime).to({value: 1.0}, 500).easing(TWEEN.Easing.Cubic.InOut).start().onComplete(()=>{
+            snapshotMesh.geometry.dispose();
+            snapshotMesh.material.dispose();
+
+            scene.remove(snapshotMesh);
+            }
+            )
+          
+
+        })
+        this.snapshotMeshArray.length = 0;
+    }
+
 
     async loadGunModel(){
         var fLoader = new FBXLoader();
@@ -376,6 +540,7 @@ export class GunController{
                 this.animationsMap["noAmmo"].reset().stop();
                 
                 this.chargeTween.to({x:0,y:0,z:0}, 100).easing(TWEEN.Easing.Cubic.In).start();
+                this.cleanSnapshots();
             }
 
             if(e.action._clip.name == "arm|charge"){
@@ -410,7 +575,7 @@ export class GunController{
             this.familiarMesh = scene.userData.faceMesh;
 
             this.familiarMesh.scale.set(0.05,0.05,0.05);
-            this.familiarMesh.material.map = this.noAmmoTexture;
+            this.familiarMesh.material.map = this.maskTexture;
 
 
             this.familiarMesh.userData.relativePos = new THREE.Vector3(0,0,0);
@@ -435,12 +600,9 @@ export class GunController{
            
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.cur);
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.userData.positions.target);
-
             this.gunModel.getObjectByName("Familiar").getWorldPosition(this.familiarMesh.position);
 
-            this.familiarMesh.updateMatrix();
-            this.familiarMesh.updateWorldMatrix(true,true);
-            this.familiarMesh.updateMatrixWorld(true);
+
 
             //#endregion
 
@@ -508,7 +670,7 @@ export class GunController{
 
             this.familiarMesh.userData.positions.target.copy(newTarget); 
 
-            this.familiarMesh.material.map = this.noAmmoTexture;
+            this.familiarMesh.material.map = this.maskTexture;
             this.familiarMesh.material.map.needsUpdate = true;
             
             this.familiarMesh.position.copy(this.familiarMesh.userData.positions.cur.clone().add(this.familiarMesh.userData.addTranslation));
@@ -520,6 +682,8 @@ export class GunController{
             // this.familiarMesh.updateMatrix();
             // this.familiarMesh.updateWorldMatrix(true,true);
             // this.familiarMesh.updateMatrixWorld(true);
+
+            this.updateSnapshots()
 
             }
         }
