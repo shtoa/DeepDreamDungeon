@@ -297,6 +297,7 @@ export class GunController{
         })
     }
 
+    // simplex noise 2D by https://github.com/stegu/webgl-noise Ashima Arts and Stefan Gustavson
     createSnapShotMaterial(faceTexture){
         var snapshotVertex  = `
             varying vec4 vPos;
@@ -1018,6 +1019,7 @@ export class GunController{
             return;
         }
 
+        // decal placement code adapated from https://www.youtube.com/watch?v=ZSTgk7JT668&ab_channel=SimonDev 
         const position = hits[0].point.clone(); // set position to the closest hit
         const eye = position.clone();
         eye.add(hits[0].face.normal);

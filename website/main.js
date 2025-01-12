@@ -960,7 +960,6 @@ async function processIndex(actionList){
     var totalIndex = 0;
 
     actionList.forEach((action)=>{
-    
         totalIndex += faceToBinary[action] //gestureToBinary[action];
     })
 
