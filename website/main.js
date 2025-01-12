@@ -683,7 +683,7 @@ function createCurThemeTexture(){
 }
 
 document.addEventListener("teleport",(e)=>{
-
+    soundPlayer.load(`themes/${scene.userData.curRoom._curTheme}/sounds/${scene.userData.curRoom._curTheme}.wav`);
     var tracker = postScene.getObjectByName("themeTracker");
     tracker.userData.IdleHand.fadeOut(0.5);
     tracker.userData.TeleportAnim.fadeIn(0.5).reset().play(); // FIX ME : JUMPING ON TELEPORT BUG ON THE UI
@@ -707,7 +707,7 @@ document.addEventListener("teleport",(e)=>{
     }
  
 
-    soundPlayer.load(`themes/${themes[themeIndex]}/sounds/${themes[themeIndex]}.wav`);
+   
 });
 
 function updateCurThemeTexture(){
